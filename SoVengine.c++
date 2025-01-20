@@ -2,6 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <SFML/System.hpp>
+#include <SFML/Audio.hpp>
 #include <math.h>
 #include <vector>
 #include <cstdlib>
@@ -11,15 +12,1260 @@
 #include <sstream>
 #include <tinyxml2.h>
 #include <limits>
+#include <random>
+#include <functional>
+#include <memory>
 
 using namespace sf;
+int area = 2;
+//Player Coordinates
+sf::Vector2f playerPosition(1900, -3000);
+
+sf::Vector2i mousePosx;
+
+sf::Sprite player;
+
+class Door {
+public:
+    Door(const sf::Vector2f& position, const std::string& texturePath)
+        : doorOpen(false), isClicked(false) {
+
+        // Load the door texture and initialize the sprite
+        if (!doorTexture.loadFromFile(texturePath)) {
+            std::cerr << "Error loading door texture!" << std::endl;
+        }
+        doorSprite.setTexture(doorTexture);
+        doorSprite.setPosition(position);
+        doorSprite.setTextureRect(sf::IntRect(0, 0, 338, 281));  // Initial door state (closed)
+
+        // Set up the clickable polygon (assuming door is a rectangle)
+        doorPolygon.setPointCount(4);
+        doorPolygon.setPoint(0, sf::Vector2f(1052, -3228));
+        doorPolygon.setPoint(1, sf::Vector2f(1052, -3410));
+        doorPolygon.setPoint(2, sf::Vector2f(1159, -3429));
+        doorPolygon.setPoint(3, sf::Vector2f(1159, -3255));
+
+        // Set a transparent fill and visible outline color for debugging
+        doorPolygon.setFillColor(sf::Color::Transparent);
+        doorPolygon.setOutlineThickness(2);
+    }
+
+    void update(const sf::Vector2i& mousePos, sf::RenderWindow& window, const sf::Vector2f& playerPos) {
+        // Convert mouse position to world coordinates
+        sf::Vector2f worldMousePos = window.mapPixelToCoords(mousePos);
+
+        // Calculate the distance between the player and the door
+        float distanceToDoor = std::sqrt(std::pow(playerPos.x - doorSprite.getPosition().x, 2) +
+                                         std::pow(playerPos.y - doorSprite.getPosition().y, 2));
+
+        // Set a threshold distance for interaction
+        float interactionThreshold = 200.0f;
+
+        if (distanceToDoor <= interactionThreshold) {
+            bool isHovering = pointInPolygon(doorPolygon, worldMousePos);
+
+            if (isHovering) {
+                doorPolygon.setOutlineColor(sf::Color::Blue);
+
+                // Handle click detection
+                if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !isClicked) {
+                    toggleDoorState(interactionThreshold);  // Pass global 'area'
+                    isClicked = true;
+                }
+            } else {
+                doorPolygon.setOutlineColor(sf::Color::Transparent);
+            }
+        } else {
+            doorPolygon.setOutlineColor(sf::Color::Transparent);
+        }
+
+        // Reset the isClicked flag when the mouse button is released
+        if (!sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+            isClicked = false;
+        }
+    }
+
+    void render(sf::RenderWindow& window) {
+        window.draw(doorSprite);  // Draw the door sprite (with current animation)
+        window.draw(doorPolygon); // Draw the clickable polygon (for visual testing)
+    }
+
+    bool pointInPolygon(const sf::ConvexShape& polygon, const sf::Vector2f& point) {
+        bool inside = false;
+        int n = polygon.getPointCount();
+        int x1 = polygon.getPoint(0).x, y1 = polygon.getPoint(0).y;
+
+        for (int i = 1; i <= n; i++) {
+            int x2 = polygon.getPoint(i % n).x, y2 = polygon.getPoint(i % n).y;
+
+            if (point.y > std::min(y1, y2)) {
+                if (point.y <= std::max(y1, y2)) {
+                    if (point.x <= std::max(x1, x2)) {
+                        if (y1 != y2) {
+                            int xinters = (point.y - y1) * (x2 - x1) / (y2 - y1) + x1;
+                            if (x1 == x2 || point.x <= xinters) {
+                                inside = !inside;
+                            }
+                        }
+                    }
+                }
+            }
+            x1 = x2;
+            y1 = y2;
+        }
+        return inside;
+    }
+
+    void toggleDoorState(float interactionThreshold) {
+        if (doorOpen) {
+            doorSprite.setTextureRect(sf::IntRect(0, 0, 338, 281));  // Close door
+        } else {
+            doorSprite.setTextureRect(sf::IntRect(338, 0, 338, 281));  // Open door
+        }
+        doorOpen = !doorOpen;
+
+        if (!doorOpen && interactionThreshold <= 200.0f) {
+            area = 4;  // Update the area to 4 when the door opens and interaction is valid
+            player.setPosition(2255.0f, 4110.0f);  // Move the player to the new position
+        }
+    }
+
+private:
+    sf::Texture doorTexture;
+    sf::Sprite doorSprite;
+    sf::ConvexShape doorPolygon;
+    bool doorOpen;
+    bool isClicked;
+};
+
+class Door2 {
+public:
+    // Updated constructor without sf::View& parameter
+    Door2(const sf::Vector2f& position, const std::string& texturePath)
+        : doorOpen(false), isClicked(false) {
+        
+        // Load the door texture and initialize the sprite
+        if (!doorTexture.loadFromFile(texturePath)) {
+            std::cerr << "Error loading door texture!" << std::endl;
+        }
+        doorSprite.setTexture(doorTexture);
+        doorSprite.setPosition(position);
+        doorSprite.setTextureRect(sf::IntRect(0, 0, 570, 1732)); // Initial door state (closed)
+
+        // Set up the clickable polygon (assuming door is a rectangle)
+        doorPolygon.setPointCount(4);
+        doorPolygon.setPoint(0, sf::Vector2f(782, 1863));
+        doorPolygon.setPoint(1, sf::Vector2f(613, 2154));
+        doorPolygon.setPoint(2, sf::Vector2f(613, 2672));
+        doorPolygon.setPoint(3, sf::Vector2f(782, 2377));
+
+        // Set a transparent fill and visible outline color for debugging
+        doorPolygon.setFillColor(sf::Color::Transparent);
+        doorPolygon.setOutlineThickness(2);
+    }
+
+    // Updated update function with sf::RenderWindow& window parameter
+    void update(const sf::Vector2i& mousePos, sf::RenderWindow& window, const sf::Vector2f& playerPos) {
+        // Convert mouse position to world coordinates
+        sf::Vector2f worldMousePos = window.mapPixelToCoords(mousePos);
+
+        // Calculate the distance between the player and the door
+        float distanceToDoor = std::sqrt(std::pow(playerPos.x - doorSprite.getPosition().x - 170, 1.8) +
+                                         std::pow(playerPos.y - doorSprite.getPosition().y - 10, 1.8));
+
+        // Set a threshold distance for interaction (you can adjust this value as needed)
+        float interactionThreshold = 400.0f;  // You can change this value based on your needs
+
+        // If the player is close enough to the door, allow interaction
+        if (distanceToDoor <= interactionThreshold) {
+            // Check if the mouse is hovering over the clickable polygon (use worldMousePos)
+            bool isHovering = pointInPolygon(doorPolygon, worldMousePos);
+        
+            if (isHovering) {
+                // Set the outline to blue when the mouse is over the polygon
+                doorPolygon.setOutlineColor(sf::Color::Blue);
+
+                // If the mouse is over the clickable polygon, handle click detection
+                if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !isClicked) {
+                    // Toggle door state on click
+                    toggleDoorState();
+                    isClicked = true;  // Prevent multiple toggles while holding down the mouse
+                }
+            } else {
+                // Make the outline transparent when the mouse is not over the polygon
+                doorPolygon.setOutlineColor(sf::Color::Transparent);
+            }
+        } else {
+            // Make the outline transparent if the player is too far from the door
+            doorPolygon.setOutlineColor(sf::Color::Transparent);
+        }
+
+        // If the mouse button is released, reset the isClicked flag
+        if (!sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+            isClicked = false;
+        }
+
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+            std::cout << "World Mouse Position: (" 
+              << worldMousePos.x << ", " 
+              << worldMousePos.y << ")" << std::endl;
+        }
+    }
+
+    void render(sf::RenderWindow& window) {
+        window.draw(doorSprite);     // Draw the door sprite (with current animation)
+        window.draw(doorPolygon);    // Draw the clickable polygon (for visual testing)
+    }
+
+    // Function to check if a point is inside the polygon (click detection)
+    bool pointInPolygon(const sf::ConvexShape& polygon, const sf::Vector2f& point) {
+        bool inside = false;
+        int n = polygon.getPointCount();
+        int x1 = polygon.getPoint(0).x, y1 = polygon.getPoint(0).y;
+    
+        for (int i = 1; i <= n; i++) {
+            int x2 = polygon.getPoint(i % n).x, y2 = polygon.getPoint(i % n).y;
+        
+            if (point.y > std::min(y1, y2)) {
+                if (point.y <= std::max(y1, y2)) {
+                    if (point.x <= std::max(x1, x2)) {
+                        if (y1 != y2) {
+                            int xinters = (point.y - y1) * (x2 - x1) / (y2 - y1) + x1;
+                            if (x1 == x2 || point.x <= xinters) {
+                                inside = !inside;
+                            }
+                        }
+                    }
+                }
+            }
+            x1 = x2; y1 = y2;
+        }
+        return inside;
+    }
+
+    // Function to toggle the door animation (open/closed)
+    void toggleDoorState() {
+        if (doorOpen) {
+            // Set door to closed (left = 0)
+            doorSprite.setTextureRect(sf::IntRect(0, 0, 570, 1732));
+        } else {
+            // Set door to open (left = 338 for example)
+            doorSprite.setTextureRect(sf::IntRect(570, 0, 570, 1732));
+        }
+        doorOpen = !doorOpen;  // Toggle the door state
+    }
+
+private:
+    sf::Texture doorTexture;
+    sf::Sprite doorSprite;
+    sf::ConvexShape doorPolygon;
+    bool doorOpen;  // Track if the door is open or closed
+    bool isClicked; // To prevent multiple toggles from a single click
+};
+
+class Door3 {
+public:
+    // Updated constructor without sf::View& parameter
+    Door3(const sf::Vector2f& position, const std::string& texturePath)
+        : doorOpen(false), isClicked(false) {
+        
+        // Load the door texture and initialize the sprite
+        if (!doorTexture.loadFromFile(texturePath)) {
+            std::cerr << "Error loading door texture!" << std::endl;
+        }
+        doorSprite.setTexture(doorTexture);
+        doorSprite.setPosition(position);
+        doorSprite.setTextureRect(sf::IntRect(0, 0, 184, 537)); // Initial door state (closed)
+
+        // Set up the clickable polygon (assuming door is a rectangle)
+        doorPolygon.setPointCount(4);
+        doorPolygon.setPoint(0, sf::Vector2f(8010, -3034));
+        doorPolygon.setPoint(1, sf::Vector2f(8010, -2905));
+        doorPolygon.setPoint(2, sf::Vector2f(7939, -3029));
+        doorPolygon.setPoint(3, sf::Vector2f(7939, -3157));
+
+        // Set a transparent fill and visible outline color for debugging
+        doorPolygon.setFillColor(sf::Color::Transparent);
+        doorPolygon.setOutlineThickness(2);
+    }
+
+    // Updated update function with sf::RenderWindow& window parameter
+    void update(const sf::Vector2i& mousePos, sf::RenderWindow& window, const sf::Vector2f& playerPos) {
+        // Convert mouse position to world coordinates
+        sf::Vector2f worldMousePos = window.mapPixelToCoords(mousePos);
+
+        // Calculate the distance between the player and the door
+        float distanceToDoor = std::sqrt(std::pow(playerPos.x - doorSprite.getPosition().x, 2) +
+                                         std::pow(playerPos.y - doorSprite.getPosition().y, 2));
+
+        // Set a threshold distance for interaction (you can adjust this value as needed)
+        float interactionThreshold = 400.0f;  // You can change this value based on your needs
+
+        // If the player is close enough to the door, allow interaction
+        if (distanceToDoor <= interactionThreshold) {
+            // Check if the mouse is hovering over the clickable polygon (use worldMousePos)
+            bool isHovering = pointInPolygon(doorPolygon, worldMousePos);
+        
+            if (isHovering) {
+                // Set the outline to blue when the mouse is over the polygon
+                doorPolygon.setOutlineColor(sf::Color::Blue);
+
+                // If the mouse is over the clickable polygon, handle click detection
+                if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !isClicked) {
+                    // Toggle door state on click
+                    toggleDoorState();
+                    isClicked = true;  // Prevent multiple toggles while holding down the mouse
+                }
+            } else {
+                // Make the outline transparent when the mouse is not over the polygon
+                doorPolygon.setOutlineColor(sf::Color::Transparent);
+            }
+        } else {
+            // Make the outline transparent if the player is too far from the door
+            doorPolygon.setOutlineColor(sf::Color::Transparent);
+        }
+
+        // If the mouse button is released, reset the isClicked flag
+        if (!sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+            isClicked = false;
+        }
+
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+            std::cout << "World Mouse Position: (" 
+              << worldMousePos.x << ", " 
+              << worldMousePos.y << ")" << std::endl;
+        }
+    }
+
+    void render(sf::RenderWindow& window) {
+        window.draw(doorSprite);     // Draw the door sprite (with current animation)
+        window.draw(doorPolygon);    // Draw the clickable polygon (for visual testing)
+    }
+
+    // Function to check if a point is inside the polygon (click detection)
+    bool pointInPolygon(const sf::ConvexShape& polygon, const sf::Vector2f& point) {
+        bool inside = false;
+        int n = polygon.getPointCount();
+        int x1 = polygon.getPoint(0).x, y1 = polygon.getPoint(0).y;
+    
+        for (int i = 1; i <= n; i++) {
+            int x2 = polygon.getPoint(i % n).x, y2 = polygon.getPoint(i % n).y;
+        
+            if (point.y > std::min(y1, y2)) {
+                if (point.y <= std::max(y1, y2)) {
+                    if (point.x <= std::max(x1, x2)) {
+                        if (y1 != y2) {
+                            int xinters = (point.y - y1) * (x2 - x1) / (y2 - y1) + x1;
+                            if (x1 == x2 || point.x <= xinters) {
+                                inside = !inside;
+                            }
+                        }
+                    }
+                }
+            }
+            x1 = x2; y1 = y2;
+        }
+        return inside;
+    }
+
+    // Function to toggle the door animation (open/closed)
+    void toggleDoorState() {
+        if (doorOpen) {
+            // Set door to closed (left = 0)
+            doorSprite.setTextureRect(sf::IntRect(0, 0, 184, 537));
+        } else {
+            // Set door to open (left = 338 for example)
+            doorSprite.setTextureRect(sf::IntRect(184, 0, 184, 537));
+        }
+        doorOpen = !doorOpen;  // Toggle the door state
+    }
+
+private:
+    sf::Texture doorTexture;
+    sf::Sprite doorSprite;
+    sf::ConvexShape doorPolygon;
+    bool doorOpen;  // Track if the door is open or closed
+    bool isClicked; // To prevent multiple toggles from a single click
+};
+
+class Door4 {
+public:
+    // Updated constructor without sf::View& parameter
+    Door4(const sf::Vector2f& position, const std::string& texturePath)
+        : doorOpen(false), isClicked(false) {
+        
+        // Load the door texture and initialize the sprite
+        if (!doorTexture.loadFromFile(texturePath)) {
+            std::cerr << "Error loading door texture!" << std::endl;
+        }
+        doorSprite.setTexture(doorTexture);
+        doorSprite.setPosition(position);
+        doorSprite.setTextureRect(sf::IntRect(0, 0, 410, 794)); // Initial door state (closed)
+
+        // Set up the clickable polygon (assuming door is a rectangle)
+        doorPolygon.setPointCount(4);
+        doorPolygon.setPoint(0, sf::Vector2f(9898, 1217));
+        doorPolygon.setPoint(1, sf::Vector2f(9898, 1467));
+        doorPolygon.setPoint(2, sf::Vector2f(10052, 1622));
+        doorPolygon.setPoint(3, sf::Vector2f(10052, 1371));
+
+        // Set a transparent fill and visible outline color for debugging
+        doorPolygon.setFillColor(sf::Color::Transparent);
+        doorPolygon.setOutlineThickness(2);
+    }
+
+    // Updated update function with sf::RenderWindow& window parameter
+    void update(const sf::Vector2i& mousePos, sf::RenderWindow& window, const sf::Vector2f& playerPos) {
+        // Convert mouse position to world coordinates
+        sf::Vector2f worldMousePos = window.mapPixelToCoords(mousePos);
+
+        // Calculate the distance between the player and the door
+        float distanceToDoor = std::sqrt(std::pow(playerPos.x - doorSprite.getPosition().x, 2) +
+                                         std::pow(playerPos.y - doorSprite.getPosition().y, 2));
+
+        // Set a threshold distance for interaction (you can adjust this value as needed)
+        float interactionThreshold = 700.0f;  // You can change this value based on your needs
+
+        // If the player is close enough to the door, allow interaction
+        if (distanceToDoor <= interactionThreshold) {
+            // Check if the mouse is hovering over the clickable polygon (use worldMousePos)
+            bool isHovering = pointInPolygon(doorPolygon, worldMousePos);
+        
+            if (isHovering) {
+                // Set the outline to blue when the mouse is over the polygon
+                doorPolygon.setOutlineColor(sf::Color::Blue);
+
+                // If the mouse is over the clickable polygon, handle click detection
+                if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !isClicked) {
+                    // Toggle door state on click
+                    toggleDoorState();
+                    isClicked = true;  // Prevent multiple toggles while holding down the mouse
+                }
+            } else {
+                // Make the outline transparent when the mouse is not over the polygon
+                doorPolygon.setOutlineColor(sf::Color::Transparent);
+            }
+        } else {
+            // Make the outline transparent if the player is too far from the door
+            doorPolygon.setOutlineColor(sf::Color::Transparent);
+        }
+
+        // If the mouse button is released, reset the isClicked flag
+        if (!sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+            isClicked = false;
+        }
+
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+            std::cout << "World Mouse Position: (" 
+              << worldMousePos.x << ", " 
+              << worldMousePos.y << ")" << std::endl;
+        }
+    }
+
+    void render(sf::RenderWindow& window) {
+        window.draw(doorSprite);     // Draw the door sprite (with current animation)
+        window.draw(doorPolygon);    // Draw the clickable polygon (for visual testing)
+    }
+
+    // Function to check if a point is inside the polygon (click detection)
+    bool pointInPolygon(const sf::ConvexShape& polygon, const sf::Vector2f& point) {
+        bool inside = false;
+        int n = polygon.getPointCount();
+        int x1 = polygon.getPoint(0).x, y1 = polygon.getPoint(0).y;
+    
+        for (int i = 1; i <= n; i++) {
+            int x2 = polygon.getPoint(i % n).x, y2 = polygon.getPoint(i % n).y;
+        
+            if (point.y > std::min(y1, y2)) {
+                if (point.y <= std::max(y1, y2)) {
+                    if (point.x <= std::max(x1, x2)) {
+                        if (y1 != y2) {
+                            int xinters = (point.y - y1) * (x2 - x1) / (y2 - y1) + x1;
+                            if (x1 == x2 || point.x <= xinters) {
+                                inside = !inside;
+                            }
+                        }
+                    }
+                }
+            }
+            x1 = x2; y1 = y2;
+        }
+        return inside;
+    }
+
+    // Function to toggle the door animation (open/closed)
+    void toggleDoorState() {
+        if (doorOpen) {
+            // Set door to closed (left = 0)
+            doorSprite.setTextureRect(sf::IntRect(0, 0, 410, 794));
+        } else {
+            // Set door to open (left = 338 for example)
+            doorSprite.setTextureRect(sf::IntRect(410, 0, 410, 794));
+        }
+        doorOpen = !doorOpen;  // Toggle the door state
+    }
+
+private:
+    sf::Texture doorTexture;
+    sf::Sprite doorSprite;
+    sf::ConvexShape doorPolygon;
+    bool doorOpen;  // Track if the door is open or closed
+    bool isClicked; // To prevent multiple toggles from a single click
+};
+
+bool hasPlayed = false;
+
+class Button {
+public:
+    Button(float x, float y, float width, float height, const std::string& text, sf::Font& font, const std::string& texturePath, std::function<void()> onClick) 
+        : onClick(onClick) {
+        // Set up button size and position
+        button.setSize(sf::Vector2f(width, height));
+        button.setPosition(x, y);
+
+        // Load texture and apply it to the button
+        if (!buttonTexture.loadFromFile(texturePath)) {
+            std::cerr << "Error loading button texture from " << texturePath << std::endl;
+        } else {
+            button.setTexture(&buttonTexture);
+        }
+
+        // Set up button text
+        buttonText.setFont(font);
+        buttonText.setString(text);
+        buttonText.setCharacterSize(42);
+        buttonText.setFillColor(sf::Color::White);
+        buttonText.setPosition(
+            x + (width - buttonText.getLocalBounds().width) / 2 - 4,
+            y + (height - buttonText.getLocalBounds().height) / 2 - 12
+        );
+    }
+
+    void draw(sf::RenderWindow& window) {
+        window.draw(button);     // Draw the button texture
+        window.draw(buttonText); // Draw the button text
+    }
+
+    void checkClick(sf::Event& event, sf::RenderWindow& window) {
+        if (event.type == sf::Event::MouseButtonPressed) {
+            // Get the mouse position in window coordinates
+            sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+            sf::Vector2f worldMousePos = window.mapPixelToCoords(mousePos);
+
+            // Check if the mouse is within the button's bounds
+            if (button.getGlobalBounds().contains(worldMousePos)) {
+                onClick();  // Trigger the onClick function if clicked
+            }
+        }
+    }
+
+    void checkHover(sf::RenderWindow& window) {
+        // Get the mouse position in window coordinates
+        sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+        sf::Vector2f worldMousePos = window.mapPixelToCoords(mousePos);
+
+        // Check if the mouse is within the button's bounds
+        if (button.getGlobalBounds().contains(worldMousePos)) {
+            // Change button texture or appearance when hovered
+            button.setFillColor(sf::Color(100, 100, 255));  // Example: change color to blue when hovered
+        } else {
+            button.setFillColor(sf::Color(255, 255, 255));  // Reset to original color when not hovered
+        }
+    }
+
+private:
+    sf::RectangleShape button;
+    sf::Text buttonText;
+    sf::Texture buttonTexture;
+    std::function<void()> onClick;
+};
+
+// Main loop for intro movie
+void playIntroMovie(sf::RenderWindow& window) {
+    //clock
+    sf::Clock clock;
+
+    // Load the background texture and font
+    sf::Texture backgroundTexture;
+    if (!backgroundTexture.loadFromFile("/home/z3ta/c++/SoV/images/castle1.png")) {
+        std::cerr << "Error loading background texture" << std::endl;
+        return;
+    }
+
+    sf::Font font;
+    if (!font.loadFromFile("/usr/share/texmf/fonts/opentype/public/tex-gyre/texgyrechorus-mediumitalic.otf")) {
+        std::cerr << "Error loading font" << std::endl;
+        return;
+    }
+
+    // Set up scrolling text
+    sf::Text scrollingText("Once upon a time, at the peak of the tallest mountain, in the northern-most part of the world,\nthere ruled a great king.\nThis king had led his people to victory through countless battles, and many wars.\nThe people of Icingr, in the harsh, cold environment of their land, have managed to prosper;\nthanks to their great kings unwavering rule over many decades.\nHowever, this king was not without enemies. For scattered throughout the icy realm;\nthere were other, more malevolent forces that sought control over the land.\nA great white dragon, known as Ghaalungraan the grim, was one such enemy of the great king.\nThe dragon wanted to take the land of Icingr for himself;\nso that from his perch upon the ice-crowned peaks,\nhe could begin his campaign for dominion over all the world.\nHowever, the king was well fortified from within his position inside the castle,\nwhich was built sturdily into the side of the mountain.\nAnd Ghaalungran knew that defeating him would not be easy.\nSo, the dragon challenged him to a one on one battle.\nKnowing that the kings prideful arrogance would not let him decline,\nGhaalungran saw this as an opportunity to destroy the king,\nand rule the land once and for all.\nThe battle was fierce. Ghaalungran had greatly underestimated the kings power,\nand almost paid the price.\nHowever; with one last great breath of excruciating, brutal frost,\nthe dragon froze the king in place atop the balcony of his castle,\nand shattered him into a million pieces.\nThus began the rule of the great dragon Ghaalungran.\nGhaalungran the grim cared not for the fate of Icingrs people. \nTo him they were merely cannon fodder; an expendable tool that he could use as he pleased.\nHe sent them off to wars with the southern kingdoms, caring not if they won or lost;\nbecause as they fought, and died, his true army only grew stronger.\nAs the once mighty forces of Icingr fizzled out against the many great armies of the south,\nGhaalungrans pile of corpses grew ever higher.\nSoon, the tyrannical dragon would have the power to summon an undead army;\nthe likes of which had never been known before,\nand his conquest for dominion over the entire world would be unstoppable.\nThus begins our tale here; in the quiet mountain village of Fjelenvar.\nYou have lived here all your life, and know little of what lies beyond.\nYou do know, however, that you are an adopted child;\nand that your exact lineage has never really been made clear.\nYou were rescued from the wilderness as an infant by some of the villagers here,\nand have been raised under their guidance ever since.\nAnd now, coming of age, you yearn to forge your own destiny,\nand learn more of the world that lies outside your humble village.\nQuite frequently, you dream of becoming someone great and powerful.\nMaybe even someone that could put a stop to all the senseless wars coming from the north...", font, 42);
+    scrollingText.setFillColor(sf::Color::White);
+    scrollingText.setPosition(0, window.getSize().y);
+
+    sf::Sprite backgroundSprite(backgroundTexture);
+
+	backgroundSprite.setPosition(200, 200);
+
+    // Create the skip button
+    Button skipButton(
+        window.getSize().x * 0.8f - 75,  // Center the button horizontally
+        window.getSize().y * 0.8f,        // Place the button lower on the screen
+        150, 75,                          // Button size
+        "Continue", font, "/home/z3ta/c++/SoV/images/sprites/buttons/button1.png", 
+        [&]() {
+            hasPlayed = true; // Mark that the intro has been skipped
+        }
+    );
+
+    // Load and play audio
+    sf::SoundBuffer buffer;
+    if (!buffer.loadFromFile("/home/z3ta/c++/SoV/audio/introtracks/intro1.ogg")) {
+        std::cerr << "Error loading audio file" << std::endl;
+        return;
+    }
+    sf::Sound sound(buffer);
+    sound.play();  // Play the audio when the intro starts
+
+    bool textScrolled = false;
+
+    // Main loop for the intro movie
+    while (window.isOpen()) {
+        sf::Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == sf::Event::Closed) {
+                window.close();
+            }
+
+            // Check for button clicks
+            skipButton.checkClick(event, window);
+
+            // If the skip button was clicked, stop the audio
+            if (hasPlayed) {
+                sound.stop();
+                break;  // Exit the loop if the intro has been skipped
+            }
+        }
+
+        // Handle text scrolling
+        if (!textScrolled) {
+            float deltaTime = clock.restart().asSeconds();
+            scrollingText.move(0, -15 * deltaTime);
+
+            if (scrollingText.getPosition().y + scrollingText.getLocalBounds().height < 0) {
+                textScrolled = true;
+            }
+        }
+
+        // Check if the mouse is hovering over the skip button
+        skipButton.checkHover(window);
+
+        // Draw everything
+        window.clear();
+        window.draw(backgroundSprite); // Draw the background
+        window.draw(scrollingText);     // Draw the scrolling text
+        skipButton.draw(window);        // Draw the skip button
+        window.display();
+
+        // If hasPlayed is true, break the loop to stop the intro without closing the game
+        if (hasPlayed) {
+            break;  // Exit the loop when the intro has been skipped or completed
+        }
+    }
+}
+
+int generateRandomNumber() {
+    // Create a random number generator and seed it
+    static std::random_device rd;  // Random seed
+    static std::mt19937 gen(rd()); // Mersenne Twister engine
+    std::uniform_int_distribution<> dis(1, 20); // Define range [1, 20]
+
+    return dis(gen);  // Generate and return the random number
+}
+
+class Minimap {
+public:
+    Minimap(const std::string& areaImagePath, float minimapScale, const sf::Vector2f& fogRadius)
+        : scale(minimapScale), fogRadius(fogRadius) {
+
+        // Load the area texture
+        if (!backgroundTexture.loadFromFile(areaImagePath)) {
+            std::cerr << "Error loading minimap area texture!" << std::endl;
+        }
+
+        // Create the background sprite (scaled-down area image)
+        backgroundSprite.setTexture(backgroundTexture);
+        backgroundSprite.setScale(scale, scale); // Scale the image down for the minimap
+		
+        // Set up the player indicator
+        playerIndicator.setRadius(5);
+        playerIndicator.setFillColor(sf::Color::White);
+
+        // Create the fog of war overlay
+        fogOverlay.setSize(sf::Vector2f(backgroundSprite.getGlobalBounds().width, backgroundSprite.getGlobalBounds().height));
+        fogOverlay.setFillColor(sf::Color(0, 0, 0, 200)); // Semi-transparent black
+
+        // Create the render texture for fog of war
+        fogRenderTexture.create(backgroundSprite.getGlobalBounds().width, backgroundSprite.getGlobalBounds().height);
+        fogRenderTexture.clear(sf::Color::Transparent); // Clear with transparent color
+    }
+
+    // Updates the minimap and player indicator position
+    void update(const sf::Vector2f& playerPosition, const sf::Vector2f& windowSize) {
+        // Adjust the minimap's position based on the player's location
+        // Here, the minimap is placed at the bottom-left corner
+        minimapPosition = playerPosition;
+		int indicatorSpeed = 200;
+        // Update the player indicator on the minimap (based on player position)
+        // Adjust the player's minimap position based on the scale of the minimap
+        playerIndicator.setPosition(minimapPosition.x + 20 + (playerPosition.x * scale / 3.77 - playerIndicator.getRadius()),
+                                    minimapPosition.y + 130 + (playerPosition.y * scale / 3.77 - playerIndicator.getRadius()));
+
+        // Update the fog of war (hidden area) based on the player's position
+        updateFogOfWar(playerPosition);
+    }
+
+    // Draw the minimap (background, fog of war, and player indicator)
+    void draw(sf::RenderWindow& window) {
+        // Draw the minimap background (scaled-down area)
+        backgroundSprite.setPosition(minimapPosition);
+        window.draw(backgroundSprite);
+
+        // Draw fog of war
+        window.draw(fogOverlay);
+
+        // Draw the player indicator
+        window.draw(playerIndicator);
+    }
+
+private:
+    sf::Texture backgroundTexture;  // Area texture for minimap
+    sf::Sprite backgroundSprite;    // Scaled background sprite
+    sf::CircleShape playerIndicator; // Indicator for player position
+    sf::RectangleShape fogOverlay;  // Fog of war overlay
+    sf::RenderTexture fogRenderTexture; // Render texture for dynamic fog of war
+    sf::Vector2f minimapPosition;  // Position of minimap on screen (fixed in bottom-left corner)
+    float scale;  // Scale factor for minimap
+    sf::Vector2f fogRadius; // Fog of war radius around the player
+
+    // Updates the fog of war overlay
+    void updateFogOfWar(const sf::Vector2f& playerPosition) {
+        // Set up a circular "visibility" area around the player
+        sf::CircleShape visibilityCircle(fogRadius.x * scale);  // Scale the fog radius
+        visibilityCircle.setFillColor(sf::Color::Transparent);
+        visibilityCircle.setOutlineColor(sf::Color::Transparent);
+        visibilityCircle.setPosition(minimapPosition.x + (playerPosition.x * scale - visibilityCircle.getRadius()),
+                                     minimapPosition.y + (playerPosition.y * scale - visibilityCircle.getRadius()));
+
+        // Clear the render texture and draw fog of war elements
+        fogRenderTexture.clear(sf::Color::Transparent);
+        fogRenderTexture.draw(fogOverlay); // Draw static fog overlay (if any)
+        fogRenderTexture.draw(visibilityCircle); // Draw dynamic visibility circle around player
+        fogRenderTexture.display(); // Update the render texture
+
+        // Update the fog of war overlay sprite with the new render texture
+        fogOverlay.setTexture(&fogRenderTexture.getTexture()); // Set updated texture
+    }
+};
+
+class NPC {
+public:
+    NPC(float startX, float startY, sf::Font& font, sf::RenderWindow& window)
+        : x(startX), y(startY), window(window), customCursorActive(false), isActive(false), selectedOption(-1) {
+
+        std::cout << "Loading NPC texture..." << std::endl;
+		
+        if (!texture.loadFromFile("/home/z3ta/c++/SoV/images/sprites/dwarfidlespritesheet.png")) {
+            std::cerr << "Error loading NPC texture!" << std::endl;
+        } else {
+            std::cout << "NPC texture loaded successfully." << std::endl;
+        }
+
+        sf::IntRect rectSourceSprite;
+        sprite.setTexture(texture);
+        rectSourceSprite = sf::IntRect(0, 0, 27, 45);  // Assuming each sprite frame is 27x45 (adjust as needed)
+        sprite.setTextureRect(rectSourceSprite);
+        sf::Vector2f sizeIncrease(1.4f, 1.4f);
+        sprite.setScale(sf::Vector2f(sprite.getScale().x + sizeIncrease.x, sprite.getScale().y + sizeIncrease.y));
+        sprite.setPosition(x, y);
+
+        // Initialize the conversation box at fixed window position
+        box.setSize(sf::Vector2f(800, 200));  // Adjust box size if needed
+        box.setFillColor(sf::Color(0, 0, 0, 180));  // Semi-transparent black
+        box.setPosition(400.f, 500.f);  // This should always appear at the same position on screen
+
+        npcText.setFont(font);
+        npcText.setCharacterSize(20);
+        npcText.setFillColor(sf::Color::White);
+        npcText.setPosition(400.f, 500.f);  // Text should appear just above the box
+
+        // Initialize options
+        for (int i = 0; i < maxOptions; ++i) {
+            sf::Text option;
+            option.setFont(font);
+            option.setCharacterSize(18);
+            option.setFillColor(sf::Color::Red);
+            option.setPosition(400.f, 540.f + (i * 30));  // Position options below the text
+            options.push_back(option);
+        }
+
+        std::cout << "NPC initialized with conversation box." << std::endl;
+    }
+
+    void update(sf::Vector2f playerPos, sf::Vector2i mousePos) {
+        sf::Vector2f worldMousePos = window.mapPixelToCoords(mousePos);
+
+        // Change cursor if the mouse is over the NPC
+        if (sprite.getGlobalBounds().contains(worldMousePos)) {
+            if (!customCursorActive) {
+                changeMouseCursor("/home/z3ta/c++/SoV/images/sprites/mouse/mousesocial.png");
+                customCursorActive = true;
+            }
+        } else if (customCursorActive) {
+            resetToDefaultCursor();
+            customCursorActive = false;
+        }
+
+        // Update mouse hover only if the conversation box is active
+        if (isActive) {
+            updateMouseHover(mousePos);
+        }
+    }
+
+    void handleInput(const sf::Event& event) {
+    	std::cout << "Handling Input Event" << std::endl;
+
+    	// Only handle the left mouse button press event
+    	if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+        	box = 1;
+    	}
+
+		if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left) {
+        	std::cout << "Mouse Position: (" << event.mouseButton.x << ", " << event.mouseButton.y << ")" << std::endl;
+        
+        	// Get mouse position in screen coordinates
+        	sf::Vector2f mousePos = window.mapPixelToCoords(sf::Vector2i(event.mouseButton.x, event.mouseButton.y));
+
+        	// Case 1: Clicked on NPC sprite to start the conversation
+        	if (sprite.getGlobalBounds().contains(mousePos)) {
+            	if (!isActive) {
+                	// Start the conversation and show dialogue box
+                	isActive = true;
+                	setText("Hello, traveler! How can I help you?");
+                	setOptions({"Ask about the quest", "Tell me about yourself", "Goodbye"});
+                	std::cout << "Conversation box activated." << std::endl;
+            	}
+        	}
+        
+        	// Case 2: Clicked inside the conversation box (check for option selection)
+        	else if (isActive && box.getGlobalBounds().contains(mousePos)) {
+            	int selectedOption = getSelectedOption();
+            
+            	if (selectedOption == 0) {
+                	setText("You asked about the quest! Here's more information.");
+                	setOptions({"Continue the quest", "Goodbye"});
+            	} else if (selectedOption == 1) {
+                	setText("You asked about me! I'm an NPC with much knowledge.");
+                	setOptions({"Ask about the quest", "Goodbye"});
+            	} else if (selectedOption == 2) {
+                	setText("Goodbye, traveler!");
+                	isActive = false;  // Deactivate conversation box only when "Goodbye" is selected
+                	std::cout << "Conversation box deactivated." << std::endl;
+            	}
+        	}
+    	}
+	}
+
+    void draw(sf::RenderWindow& window) {
+        window.draw(sprite);  // Always draw NPC sprite
+
+        if (isActive) {
+            drawConversationBox(window);  // Draw conversation box if active
+        }
+    }
+
+    bool getIsActive() const {
+        return isActive;
+    }
+
+    void setText(const std::string& npcDialogue) {
+        npcText.setString(npcDialogue);
+        std::cout << "NPC text set to: " << npcDialogue << std::endl;
+    }
+
+    void setOptions(const std::vector<std::string>& playerOptions) {
+        for (size_t i = 0; i < playerOptions.size() && i < maxOptions; ++i) {
+            options[i].setString(playerOptions[i]);
+        }
+    }
+
+    int getSelectedOption() const {
+        return selectedOption;
+    }
+
+private:
+    void updateMouseHover(sf::Vector2i mousePosition) {
+        selectedOption = -1;
+        for (size_t i = 0; i < options.size(); ++i) {
+            // Check if mouse position is over the text option area
+            if (options[i].getGlobalBounds().contains(mousePosition.x, mousePosition.y)) {
+                selectedOption = i;
+                std::cout << "Mouse hovering over option " << selectedOption << std::endl;
+                break;
+            }
+        }
+    }
+
+    void drawConversationBox(sf::RenderWindow& window) {
+    	if (isActive) {
+        	// Save the current view (in case you have camera transformations)
+        	sf::View originalView = window.getView();
+        
+        	// Set the view to the default screen space (no transformations)
+        	window.setView(window.getDefaultView());
+
+        	// Now draw UI elements in screen space
+        	window.draw(box);  // Draw the conversation box
+        	window.draw(npcText);  // Draw NPC dialogue
+
+        	// Draw the options
+        	for (size_t i = 0; i < options.size(); ++i) {
+            	// Set color based on hover state
+            	options[i].setFillColor(i == selectedOption ? sf::Color::White : sf::Color::Red);
+            	window.draw(options[i]);  // Draw each option
+        	}
+
+        	// Restore the original view
+        	window.setView(originalView);
+    	}
+		
+	}
+
+    void changeMouseCursor(const std::string& cursorPath) {
+        sf::Image cursorImage;
+        if (!cursorImage.loadFromFile(cursorPath)) {
+            std::cerr << "Error loading cursor image from path: " << cursorPath << std::endl;
+            resetToDefaultCursor();
+            return;
+        }
+
+        sf::Cursor customCursor;
+        if (customCursor.loadFromPixels(cursorImage.getPixelsPtr(),
+                                        sf::Vector2u(cursorImage.getSize().x, cursorImage.getSize().y),
+                                        sf::Vector2u(0, 0))) {
+            window.setMouseCursor(customCursor);
+        } else {
+            std::cerr << "Failed to create cursor from image!" << std::endl;
+            resetToDefaultCursor();
+        }
+    }
+
+    void resetToDefaultCursor() {
+        sf::Cursor defaultCursor;
+        if (defaultCursor.loadFromSystem(sf::Cursor::Arrow)) {
+            window.setMouseCursor(defaultCursor);  // Use the default cursor
+        } else {
+            std::cerr << "Error loading default cursor!" << std::endl;
+        }
+    }
+
+    float x, y;
+    bool customCursorActive;
+    bool isActive;
+    sf::Sprite sprite;
+    sf::Texture texture;
+    sf::RectangleShape box;
+    sf::Text npcText;
+    std::vector<sf::Text> options;
+    int selectedOption;
+    static const int maxOptions = 3;
+    sf::RenderWindow& window;
+};
+
+int playerHealth = 10;
+int playerArmor = 17;
+
+class Enemy {
+public:
+    float x, y; // Enemy's position
+    int direction; // Direction the enemy is facing (0-7)
+	int health = 4;
+	int playerhealth;
+	int playerarmor;
+    const float detectionRange = 1000.0f; // Range to detect a target
+	const float attackRange = 70.0f;
+    float speed = 2.0f; // Enemy movement speed
+	bool attacking = false;
+    sf::Sprite sprite;  // The enemy's sprite
+    sf::Texture texture; // The texture (spritesheet)
+    sf::IntRect rectSourceSprite; // Source rect for texture (for animation)
+
+	int generateRandomNumber() {
+    	// Create a random number generator and seed it
+    	static std::random_device rd;  // Random seed
+    	static std::mt19937 gen(rd()); // Mersenne Twister engine
+    	std::uniform_int_distribution<> dis(1, 20); // Define range [1, 20]
+
+    	return dis(gen);  // Generate and return the random number
+	}
+
+	int enemyAttackRoll = generateRandomNumber();
+    // Timing variables for animation frame updates
+    float animationTimer;
+    const float animationSpeed = 70.0f; // Speed of animation frame updates (seconds per frame)
+
+    // Boolean to track whether the enemy is moving
+    bool isMoving;
+
+    // Constructor to initialize the enemy's position and load the texture
+    Enemy(float startX, float startY, int& playerHealth, int& playerArmor) : x(startX), y(startY), direction(0), animationTimer(0.0f), isMoving(false), playerhealth(playerHealth), playerarmor(playerArmor) {
+        if (!texture.loadFromFile("/home/z3ta/c++/SoV/images/sprites/skelspritesheetx.png")) {
+            std::cerr << "Error loading enemy texture!" << std::endl;
+        }
+
+        sprite.setTexture(texture);
+        rectSourceSprite = sf::IntRect(0, 0, 127, 100); // Initial position of the sprite (default direction 0)
+        sprite.setTextureRect(rectSourceSprite);
+		sf::Vector2f sizeIncrease(1.0f, 1.0f);
+        sprite.setScale(sf::Vector2f(sprite.getScale().x + sizeIncrease.x, sprite.getScale().y + sizeIncrease.y));
+        sprite.setPosition(x, y);
+    }
+
+    // Update the enemy's behavior based on a target position (e.g., player or other object)
+    void update(float targetX, float targetY, float deltaTime) {
+        float distance = std::sqrt(std::pow(targetX - x, 2) + std::pow(targetY - y, 2));
+
+        // Only move and update animation if within detection range
+        if (distance < detectionRange) {
+            // Move the enemy towards the target
+            moveTowardsTarget(targetX, targetY, deltaTime);
+
+            // Update animation based on whether the enemy is moving
+            updateAnimation(deltaTime);
+			sprite.setPosition(x, y);
+        } else {
+            // If the enemy is outside detection range, set it to idle
+            isMoving = false;
+            updateAnimation(deltaTime);
+			
+        }
+		
+    }
+
+	void updatehealth(float targetX, float targetY){
+		float distance = std::sqrt(std::pow(targetX - x, 2) + std::pow(targetY - y, 2));
+		std::cout << "distance: " << distance << std::endl;
+		if(distance < attackRange){
+			health -= 1;
+			std::cout << "enemy health: " << health << std::endl;
+		}
+	
+	}
+
+private:
+    // Method for moving the enemy towards the target (could be the player or any other target)
+    void moveTowardsTarget(float targetX, float targetY, float deltaTime){
+    	// Calculate direction to move
+    	float dirX = targetX - x;
+    	float dirY = targetY - y;
+    	float length = std::sqrt(dirX * dirX + dirY * dirY);
+		
+    	if (length > 70 && health > 0){
+        	// Normalize direction vector
+        	dirX /= length;
+        	dirY /= length;
+
+        	// Move the enemy towards the target
+        	x += dirX * speed * 1;  // Adjust movement by deltaTime for smooth movement
+        	y += dirY * speed * 1;
+
+        	// Update the direction the enemy is facing
+        	updateMovementDirection(dirX, dirY);
+
+        	// Set isMoving to true since the enemy is moving
+        	isMoving = true;
+			attacking = false;
+    	} 
+		
+		else{
+        	// If the distance to the target is too small, set isMoving to false (idle)
+        	isMoving = false;
+			attacking = true;
+			updateAttackDirection(dirX, dirY);
+    	}
+
+		if(health <= 0){
+			isMoving = false;
+			updateDeathDirection(dirX, dirY);
+		}
+
+	}
+
+    // Update the direction the enemy is facing based on the movement direction
+    void updateMovementDirection(float dirX, float dirY){
+    	// Calculate the angle in radians
+    	float angle = std::atan2(dirY, dirX) * 180.0f / 3.14159f; // Convert radians to degrees
+
+    	// Normalize the angle to be between 0 and 360 degrees
+    	if (angle < 0) {
+        	angle += 360.0f;
+    	}
+
+    	// Now map the angle to one of the 8 directions (0-7)
+    	if (angle >= 337.5f || angle < 22.5f) {
+        	direction = 46; // Right
+    	} else if (angle >= 22.5f && angle < 67.5f) {
+        	direction = 47; // Down-Right
+    	} else if (angle >= 67.5f && angle < 112.5f) {
+        	direction = 40; // Down
+    	} else if (angle >= 112.5f && angle < 157.5f) {
+        	direction = 41; // Down-Left
+    	} else if (angle >= 157.5f && angle < 202.5f) {
+        	direction = 42; // Left
+    	} else if (angle >= 202.5f && angle < 247.5f) {
+        	direction = 43; // Up-Left
+    	} else if (angle >= 247.5f && angle < 292.5f) {
+        	direction = 44; // Up
+    	} else if (angle >= 292.5f && angle < 337.5f) {
+        	direction = 45; // Up-Right
+    	}
+		
+	}
+
+	void updateAttackDirection(float dirX, float dirY) {
+    	// Calculate the angle in radians
+    	float angle = std::atan2(dirY, dirX) * 180.0f / 3.14159f; // Convert radians to degrees
+
+    	// Normalize the angle to be between 0 and 360 degrees
+    	if (angle < 0) {
+        	angle += 360.0f;
+    	}
+
+    	// Now map the angle to one of the 8 directions (0-7)
+    	if (angle >= 337.5f || angle < 22.5f) {
+        	direction = 6; // Right
+    	} else if (angle >= 22.5f && angle < 67.5f) {
+        	direction = 7; // Down-Right
+    	} else if (angle >= 67.5f && angle < 112.5f) {
+        	direction = 0; // Down
+    	} else if (angle >= 112.5f && angle < 157.5f) {
+        	direction = 1; // Down-Left
+    	} else if (angle >= 157.5f && angle < 202.5f) {
+        	direction = 2; // Left
+    	} else if (angle >= 202.5f && angle < 247.5f) {
+        	direction = 3; // Up-Left
+    	} else if (angle >= 247.5f && angle < 292.5f) {
+        	direction = 4; // Up
+    	} else if (angle >= 292.5f && angle < 337.5f) {
+        	direction = 5; // Up-Right
+    	}
+
+	}
+
+	void updateDeathDirection(float dirX, float dirY) {
+		isMoving = false;
+    	// Calculate the angle in radians
+    	float angle = std::atan2(dirY, dirX) * 180.0f / 3.14159f; // Convert radians to degrees
+
+    	// Normalize the angle to be between 0 and 360 degrees
+    	if (angle < 0) {
+        	angle += 360.0f;
+    	}
+
+    	// Now map the angle to one of the 8 directions (0-7)
+    	if (angle >= 337.5f || angle < 22.5f) {
+        	direction = 14; // Right
+    	} else if (angle >= 22.5f && angle < 67.5f) {
+        	direction = 15; // Down-Right
+    	} else if (angle >= 67.5f && angle < 112.5f) {
+        	direction = 8; // Down
+    	} else if (angle >= 112.5f && angle < 157.5f) {
+        	direction = 9; // Down-Left
+    	} else if (angle >= 157.5f && angle < 202.5f) {
+        	direction = 10; // Left
+    	} else if (angle >= 202.5f && angle < 247.5f) {
+        	direction = 11; // Up-Left
+    	} else if (angle >= 247.5f && angle < 292.5f) {
+        	direction = 12; // Up
+    	} else if (angle >= 292.5f && angle < 337.5f) {
+        	direction = 13; // Up-Right
+    	}
+
+		if (rectSourceSprite.left >= 1778) {
+			rectSourceSprite.left = 1778;
+		}
+	}
+
+    // Update the enemy's animation based on the direction and isMoving status
+    void updateAnimation(float deltaTime) {
+        // Increment the animation timer by the delta time
+        animationTimer += 10;
+		
+        // If enough time has passed, move to the next animation frame
+        if (animationTimer >= animationSpeed) {
+            animationTimer = 0.0f; // Reset timer
+			if (health > 0){
+            	// Calculate the top position in the sprite sheet based on the current direction
+            	rectSourceSprite.top = direction * 99.4; // 100 is the height of each sprite (height per row)
+			}
+
+			else{
+				rectSourceSprite.top = 800;
+			}
+            // Determine the animation state based on movement (e.g., 0 = idle, 1 = moving)
+            int animationState = isMoving ? 1 : 0;  // 1 for moving, 0 for idle
+
+            // Update the left value based on the animation state
+            
+			if (health > 0){
+            	// Move to the next frame in the animation (assuming 8 frames per direction)
+            	if (rectSourceSprite.left >= 127 * 7) {  // If the left position exceeds the max frame (7 frames per direction)
+                	rectSourceSprite.left = 0; // Reset to the first frame
+            	} else {
+                	rectSourceSprite.left += 127; // Move to the next frame
+            	}
+			}
+
+			else if (health <= 0){
+				if (rectSourceSprite.left >= 1778){
+					rectSourceSprite.left = 1778;
+				}
+				else{
+					rectSourceSprite.left += 127;
+				}
+			}
+
+			if (health > 0 && attacking == true){
+				if (rectSourceSprite.left == 889){
+					enemyAttackRoll = generateRandomNumber();
+					std::cout << "enemy attack roll: " << enemyAttackRoll << std::endl;
+					if (enemyAttackRoll >= playerArmor){
+						playerHealth -= 1;
+                    	std::cout << "player health: " << playerHealth << std::endl;
+					}
+				}
+			}
+
+            // Set the updated texture rect for the sprite
+            sprite.setTextureRect(rectSourceSprite);
+        }
+    }
+
+public:
+    // Getter for the sprite
+    sf::Sprite& getSprite() {
+        return sprite;
+    }
+};
 
 // Define a structure for a 2D vector
 struct Vectorx2f {
     float x, y;
 
+    // Constructor
     Vectorx2f(float x = 0, float y = 0) : x(x), y(y) {}
 
+    // Operator overloading for vector addition and subtraction
     Vectorx2f operator+(const Vectorx2f& other) const {
         return Vectorx2f(x + other.x, y + other.y);
     }
@@ -28,17 +1274,30 @@ struct Vectorx2f {
         return Vectorx2f(x - other.x, y - other.y);
     }
 
+    // Dot product of two vectors
     float dot(const Vectorx2f& other) const {
         return x * other.x + y * other.y;
     }
 
+    // Magnitude of the vector
     float magnitude() const {
         return std::sqrt(x * x + y * y);
     }
 
+    // Normalize the vector
     Vectorx2f normalize() const {
         float magnitude = this->magnitude();
         return Vectorx2f(x / magnitude, y / magnitude);
+    }
+
+    // Convert from sf::Vector2f to Vectorx2f
+    static Vectorx2f fromSF(const sf::Vector2f& sfVec) {
+        return Vectorx2f(sfVec.x, sfVec.y);
+    }
+
+    // Convert from Vectorx2f to sf::Vector2f
+    sf::Vector2f toSF() const {
+        return sf::Vector2f(x, y);
     }
 };
 
@@ -191,6 +1450,26 @@ void resolveCollision(Polygon& collisionx, const Vectorx2f& collisionNormal) {
 
 int main()
 {
+	// Load font for button text
+    sf::Font font;
+    if (!font.loadFromFile("/usr/share/texmf/fonts/opentype/public/tex-gyre/texgyrechorus-mediumitalic.otf")) {
+        std::cerr << "Error loading font!" << std::endl;
+        return -1;
+    }
+    Enemy enemy(50, 50, playerHealth, playerArmor);
+    Enemy enemy1(500, 500, playerHealth, playerArmor);
+	
+	
+	Minimap minimap1("/home/z3ta/c++/SoV/images/backgrounds/town1xmm.jpg", 0.1f, sf::Vector2f(100.f, 100.f)); // Example values
+	Minimap minimap2("/home/z3ta/c++/SoV/images/backgrounds/town2mm.jpg", 0.1f, sf::Vector2f(100.f, 100.f)); // Example values
+	Minimap minimap3("/home/z3ta/c++/SoV/images/backgrounds/wilderness1mm.jpg", 0.1f, sf::Vector2f(100.f, 100.f)); // Example values
+	Door fjeltaverndoor(sf::Vector2f(900, -3472), "/home/z3ta/c++/SoV/images/sprites/doorspritesheet1.png");
+	Door2 halfgiantsdoor(sf::Vector2f(249, 1733), "/home/z3ta/c++/SoV/images/sprites/hgdoorspritesheet.png");
+	Door3 smithdoor(sf::Vector2f(7835, -3364), "/home/z3ta/c++/SoV/images/sprites/smithdoor.png");
+	Door4 herbalistdoor(sf::Vector2f(9664, 967), "/home/z3ta/c++/SoV/images/sprites/herbalistdoorspritesheet.png");
+	std::string textureFile = "/home/z3ta/c++/SoV/images/sprites/buttons/button1.png";
+
+	int playerAttackRoll = generateRandomNumber();
 
 	// Create a player polygon (initial position)
     Polygon collisionx;
@@ -378,503 +1657,561 @@ int main()
 
 	//Fjelenvar collision barriers
 
-	//Top
-
-	Polygon fjelbarrier1;
-	fjelbarrier1.vertices = {
-		Vectorx2f(1640, -3455),
-		Vectorx2f(2100, -3545)
+	Polygon fjelhouse1;
+	fjelhouse1.vertices = {
+		Vectorx2f(-30, 3775),
+		Vectorx2f(1360, 1340)
 	};
 
-	Polygon fjelbarrier2;
-	fjelbarrier2.vertices = {
-		Vectorx2f(2100, -3545),
-		Vectorx2f(7655, -3550)
+	Polygon fjelhouse2;
+	fjelhouse2.vertices = {
+		Vectorx2f(1360, 1340),
+		Vectorx2f(-25, 200)
 	};
 
-	Polygon fjelbarrier3;
-	fjelbarrier3.vertices = {
-		Vectorx2f(7700, -3505),
-		Vectorx2f(8150, -2710)
+	Polygon westbarrier;
+	westbarrier.vertices = {
+		Vectorx2f(-30, 6525),
+		Vectorx2f(-30, -4370)
 	};
 
-	Polygon fjelbarrier4;
-	fjelbarrier4.vertices = {
-		Vectorx2f(8130, -2680),
-		Vectorx2f(8400, -2755)
+	Polygon northwestbarrier1;
+	northwestbarrier1.vertices = {
+		Vectorx2f(-30, -2350),
+		Vectorx2f(425, -3015)
 	};
 
-	Polygon fjelbarrier5;
-	fjelbarrier5.vertices = {
-		Vectorx2f(8400, -2755),
-		Vectorx2f(7975, -3625)
+	Polygon tavernbarrier;
+	tavernbarrier.vertices = {
+		Vectorx2f(425, -3015),
+		Vectorx2f(1635, -3365)
 	};
 
-	Polygon fjelbarrier6;
-	fjelbarrier6.vertices = {
-		Vectorx2f(7975, -3540),
-		Vectorx2f(8505, -3540)
+	Polygon northwestbarrier2;
+	northwestbarrier2.vertices = {
+		Vectorx2f(1635, -3365),
+		Vectorx2f(2205, -3630)
 	};
 
-	Polygon fjelbarrier7;
-	fjelbarrier7.vertices = {
-		Vectorx2f(8585, -3625),
-		Vectorx2f(8555, -2640)
+	Polygon northbarrier1;
+	northbarrier1.vertices = {
+		Vectorx2f(2205, -3630),
+		Vectorx2f(2455, -3750)
 	};
 
-	Polygon fjelbarrier8;
-	fjelbarrier8.vertices = {
-		Vectorx2f(8630, -2770),
-		Vectorx2f(8570, -2515)
+	Polygon northbarrier2;
+	northbarrier2.vertices = {
+		Vectorx2f(2455, -3750),
+		Vectorx2f(2950, -3795)
 	};
 
-	Polygon fjelbarrier9;
-	fjelbarrier9.vertices = {
-		Vectorx2f(8510, -2545),
-		Vectorx2f(7590, -1730)
+	Polygon northbarrier3;
+	northbarrier3.vertices = {
+		Vectorx2f(2950, -3795),
+		Vectorx2f(3040, -3830)
 	};
 
-	Polygon fjelbarrier10;
-	fjelbarrier10.vertices = {
-		Vectorx2f(7590, -1730),
-		Vectorx2f(6870, -1155)
+	Polygon northbarrier4;
+	northbarrier4.vertices = {
+		Vectorx2f(3040, -3830),
+		Vectorx2f(3220, -3810)
 	};
 
-	Polygon fjelbarrier11;
-	fjelbarrier11.vertices = {
-		Vectorx2f(6870, -1195),
-		Vectorx2f(5695, 370)
+	Polygon northbarrier5;
+	northbarrier5.vertices = {
+		Vectorx2f(3220, -3810),
+		Vectorx2f(4065, -3940)
 	};
 
-	Polygon fjelbarrier12;
-	fjelbarrier12.vertices = {
-		Vectorx2f(5180, 1250),
-		Vectorx2f(4865, 1590)
+	Polygon northbarrier6;
+	northbarrier6.vertices = {
+		Vectorx2f(4065, -3940),
+		Vectorx2f(5120, -3830)
 	};
 
-	Polygon fjelbarrier13;
-	fjelbarrier13.vertices = {
-		Vectorx2f(4865, 1590),
-		Vectorx2f(4675, 1555)
+	Polygon northbarrier7;
+	northbarrier7.vertices = {
+		Vectorx2f(5120, -3830),
+		Vectorx2f(5265, -3855)
 	};
 
-	Polygon fjelbarrier14;
-	fjelbarrier14.vertices = {
-		Vectorx2f(4675, 1555),
-		Vectorx2f(2015, 3680)
+	Polygon northbarrier8;
+	northbarrier8.vertices = {
+		Vectorx2f(5265, -3855),
+		Vectorx2f(5625, -3810)
 	};
 
-	Polygon fjelbarrier15;
-	fjelbarrier15.vertices = {
-		Vectorx2f(2015, 3680),
-		Vectorx2f(1800, 3720)
-	};
-
-	Polygon fjelbarrier16;
-	fjelbarrier16.vertices = {
-		Vectorx2f(1800, 3720),
-		Vectorx2f(1100, 4275)
-	};
-
-	Polygon fjelbarrier17;
-	fjelbarrier17.vertices = {
-		Vectorx2f(1100, 4275),
-		Vectorx2f(675, 3860)
-	};
-
-	Polygon fjelbarrier18;
-	fjelbarrier18.vertices = {
-		Vectorx2f(675, 3860),
-		Vectorx2f(565, 2920)
-	};
-
-	Polygon fjelbarrier19;
-	fjelbarrier19.vertices = {
-		Vectorx2f(565, 2920),
-		Vectorx2f(1360, 1305)
-	};
-
-	Polygon fjelbarrier20;
-	fjelbarrier20.vertices = {
-		Vectorx2f(1360, 1305),
-		Vectorx2f(1360, 1075)
-	};
-
-	Polygon fjelbarrier21;
-	fjelbarrier21.vertices = {
-		Vectorx2f(1360, 1075),
-		Vectorx2f(645, 290)
-	};
-
-	Polygon fjelbarrier22;
-	fjelbarrier22.vertices = {
-		Vectorx2f(645, 290),
-		Vectorx2f(645, -3090)
-	};
-
-	Polygon fjelbarrier24;
-	fjelbarrier24.vertices = {
-		Vectorx2f(115, -3100),
-		Vectorx2f(140, 3270)
-	};
-
-	Polygon fjelbarrier25;
-	fjelbarrier25.vertices = {
-		Vectorx2f(535, -3120),
-		Vectorx2f(1635, -3415)
-	};
-
-	//Bottom
-
-	Polygon fjelbarrier26;
-	fjelbarrier26.vertices = {
-		Vectorx2f(7050, 2855),
-		Vectorx2f(6915, 2980)
+	Polygon northbarrier9;
+	northbarrier9.vertices = {
+		Vectorx2f(5625, -3810),
+		Vectorx2f(5825, -3845)
 	};
 	
-	Polygon fjelbarrier27;
-	fjelbarrier27.vertices = {
-		Vectorx2f(6915, 2980),
-		Vectorx2f(6905, 3050)
+	Polygon northbarrier10;
+	northbarrier10.vertices = {
+		Vectorx2f(5825, -3845),
+		Vectorx2f(5975, -3980)
 	};
 
-	Polygon fjelbarrier28;
-	fjelbarrier28.vertices = {
-		Vectorx2f(6905, 3050),
-		Vectorx2f(6630, 3400)
+	Polygon northbarrier11;
+	northbarrier11.vertices = {
+		Vectorx2f(5975, -3980),
+		Vectorx2f(6995, -4035)
 	};
 
-	Polygon fjelbarrier29;
-	fjelbarrier29.vertices = {
-		Vectorx2f(6630, 3400),
-		Vectorx2f(6535, 3380)
+	Polygon northbarrier12;
+	northbarrier12.vertices = {
+		Vectorx2f(6995, -4035),
+		Vectorx2f(7665, -3410)
 	};
 
-	Polygon fjelbarrier30;
-	fjelbarrier30.vertices = {
-		Vectorx2f(6535, 3380),
-		Vectorx2f(6380, 3887)
+	Polygon northbarrier13;
+	northbarrier13.vertices = {
+		Vectorx2f(8035, -3540),
+		Vectorx2f(8495, -3540)
 	};
 
-	Polygon fjelbarrier31;
-	fjelbarrier31.vertices = {
-		Vectorx2f(6380, 3887),
-		Vectorx2f(6445, 3420)
+	Polygon blacksmithshouse1;
+	blacksmithshouse1.vertices = {
+		Vectorx2f(7665, -3410),
+		Vectorx2f(8130, -2620)
 	};
 
-	Polygon fjelbarrier32;
-	fjelbarrier32.vertices = {
-		Vectorx2f(6445, 3420),
-		Vectorx2f(6380, 4060)
+	Polygon blacksmithshouse2;
+	blacksmithshouse2.vertices = {
+		Vectorx2f(8130, -2620),
+		Vectorx2f(8405, -2695)
 	};
 
-	Polygon fjelbarrier33;
-	fjelbarrier33.vertices = {
-		Vectorx2f(6380, 4060),
-		Vectorx2f(6395, 4135)
+	Polygon blacksmithshouse3;
+	blacksmithshouse3.vertices = {
+		Vectorx2f(8405, -2695),
+		Vectorx2f(7890, -3565)
 	};
 
-	Polygon fjelbarrier34;
-	fjelbarrier34.vertices = {
-		Vectorx2f(6395, 4135),
-		Vectorx2f(6230, 4220)
+	Polygon blacksmithshouse4;
+	blacksmithshouse4.vertices = {
+		Vectorx2f(7890, -3565),
+		Vectorx2f(8035, -3540)
 	};
 
-	Polygon fjelbarrier35;
-	fjelbarrier35.vertices = {
-		Vectorx2f(6230, 4220),
-		Vectorx2f(6230, 4310)
+	Polygon cliffside1;
+	cliffside1.vertices = {
+		Vectorx2f(8395, -3640),
+		Vectorx2f(8535, -2720)
 	};
 
-	Polygon fjelbarrier36;
-	fjelbarrier36.vertices = {
-		Vectorx2f(6230, 4310),
-		Vectorx2f(5580, 5280)
+	Polygon cliffside2;
+	cliffside2.vertices = {
+		Vectorx2f(8535, -2720),
+		Vectorx2f(8470, -2405)
 	};
 
-	Polygon fjelbarrier37;
-	fjelbarrier37.vertices = {
-		Vectorx2f(5580, 5280),
-		Vectorx2f(5675, 5725)
+	Polygon cliffside3;
+	cliffside3.vertices = {
+		Vectorx2f(8470, -2405),
+		Vectorx2f(7885, -1795)
 	};
 
-	Polygon fjelbarrier38;
-	fjelbarrier38.vertices = {
-		Vectorx2f(5675, 5715),
-		Vectorx2f(6100, 5600)
+	Polygon cliffside4;
+	cliffside4.vertices = {
+		Vectorx2f(7885, -1795),
+		Vectorx2f(6975, -1125)
 	};
 
-	Polygon fjelbarrier39;
-	fjelbarrier39.vertices = {
-		Vectorx2f(6100, 5900),
-		Vectorx2f(8970, 5705)
+	Polygon cliffside5;
+	cliffside5.vertices = {
+		Vectorx2f(6975, -1125),
+		Vectorx2f(6850, -1085)
 	};
 
-	Polygon fjelbarrier40;
-	fjelbarrier40.vertices = {
-		Vectorx2f(8970, 5705),
-		Vectorx2f(9175, 5420)
+	Polygon cliffside6;
+	cliffside6.vertices = {
+		Vectorx2f(6850, -1085),
+		Vectorx2f(6215, -215)
 	};
 
-	Polygon fjelbarrier41;
-	fjelbarrier41.vertices = {
-		Vectorx2f(9175, 5420),
-		Vectorx2f(9405, 5345)
+	Polygon cliffside7;
+	cliffside7.vertices = {
+		Vectorx2f(6215, -215),
+		Vectorx2f(5735, 415)
 	};
 
-	Polygon fjelbarrier42;
-	fjelbarrier42.vertices = {
-		Vectorx2f(9405, 5345),
-		Vectorx2f(9405, 5205)
+	Polygon cliffside8;
+	cliffside8.vertices = {
+		Vectorx2f(5220, 1355),
+		Vectorx2f(4870, 1705)
 	};
 
-	Polygon fjelbarrier43;
-	fjelbarrier43.vertices = {
-		Vectorx2f(9405, 5205),
-		Vectorx2f(9660, 4845)
+	Polygon cliffside9;
+	cliffside9.vertices = {
+		Vectorx2f(4870, 1705),
+		Vectorx2f(4685, 1680)
 	};
 
-	Polygon fjelbarrier44;
-	fjelbarrier44.vertices = {
-		Vectorx2f(9660, 4845),
-		Vectorx2f(9755, 4630)
+	Polygon cliffside10;
+	cliffside10.vertices = {
+		Vectorx2f(4685, 1680),
+		Vectorx2f(4465, 2055)
 	};
 
-	Polygon fjelbarrier45;
-	fjelbarrier45.vertices = {
-		Vectorx2f(9755, 4630),
-		Vectorx2f(9725, 4390)
+	Polygon cliffside11;
+	cliffside11.vertices = {
+		Vectorx2f(4465, 2055),
+		Vectorx2f(4330, 2180)
 	};
 
-	Polygon fjelbarrier46;
-	fjelbarrier46.vertices = {
-		Vectorx2f(9725, 4390),
-		Vectorx2f(9820, 3895)
+	Polygon cliffside12;
+	cliffside12.vertices = {
+		Vectorx2f(4330, 2180),
+		Vectorx2f(4110, 2310)
 	};
 
-	Polygon fjelbarrier47;
-	fjelbarrier47.vertices = {
-		Vectorx2f(9820, 3895),
-		Vectorx2f(9740, 3060)
+	Polygon cliffside13;
+	cliffside13.vertices = {
+		Vectorx2f(4110, 2310),
+		Vectorx2f(3460, 3030)
 	};
 
-	Polygon fjelbarrier48;
-	fjelbarrier48.vertices = {
-		Vectorx2f(9740, 3060),
-		Vectorx2f(9795, 2610)
+	Polygon cliffside14;
+	cliffside14.vertices = {
+		Vectorx2f(3460, 3030),
+		Vectorx2f(3190, 3215)
 	};
 
-	Polygon fjelbarrier49;
-	fjelbarrier49.vertices = {
-		Vectorx2f(9795, 2610),
-		Vectorx2f(9935, 2490)
+	Polygon cliffside15;
+	cliffside15.vertices = {
+		Vectorx2f(3190, 3215),
+		Vectorx2f(3000, 3255)
 	};
 
-	Polygon fjelbarrier50;
-	fjelbarrier50.vertices = {
-		Vectorx2f(9935, 2490),
-		Vectorx2f(9935, 2215)
+	Polygon cliffside16;
+	cliffside16.vertices = {
+		Vectorx2f(3000, 3255),
+		Vectorx2f(2695, 3580)
 	};
 
-	Polygon fjelbarrier51;
-	fjelbarrier51.vertices = {
-		Vectorx2f(9935, 2215),
-		Vectorx2f(10270, 1870)
+	Polygon cliffside17;
+	cliffside17.vertices = {
+		Vectorx2f(2695, 3580),
+		Vectorx2f(2520, 3635)
 	};
 
-	Polygon fjelbarrier52;
-	fjelbarrier52.vertices = {
-		Vectorx2f(10270, 1870),
-		Vectorx2f(9460, 1005)
+	Polygon cliffside18;
+	cliffside18.vertices = {
+		Vectorx2f(2520, 3635),
+		Vectorx2f(2495, 3715)
 	};
 
-	Polygon fjelbarrier53;
-	fjelbarrier53.vertices = {
-		Vectorx2f(9460, 1005),
-		Vectorx2f(9870, 615)
+	Polygon cliffside19;
+	cliffside19.vertices = {
+		Vectorx2f(2495, 3715),
+		Vectorx2f(2360, 3795)
 	};
 
-	Polygon fjelbarrier54;
-	fjelbarrier54.vertices = {
-		Vectorx2f(9870, 615),
-		Vectorx2f(10245, 615)
+	Polygon cliffside20;
+	cliffside20.vertices = {
+		Vectorx2f(2360, 3795),
+		Vectorx2f(1890, 3810)
 	};
 
-	Polygon fjelbarrier55;
-	fjelbarrier55.vertices = {
-		Vectorx2f(10245, 615),
-		Vectorx2f(10245, -2085)
+	Polygon cliffside21;
+	cliffside20.vertices = {
+		Vectorx2f(1890, 3810),
+		Vectorx2f(1660, 3915)
 	};
 
-	Polygon fjelbarrier56;
-	fjelbarrier56.vertices = {
-		Vectorx2f(10245, -2085),
-		Vectorx2f(8555, -2250)
+	Polygon cliffside22;
+	cliffside22.vertices = {
+		Vectorx2f(1660, 3915),
+		Vectorx2f(305, 5120)
 	};
 
-	Polygon fjelbarrier57;
-	fjelbarrier57.vertices = {
-		Vectorx2f(10045, 75),
-		Vectorx2f(9985, 75)
+	Polygon cliffside23;
+	cliffside23.vertices = {
+		Vectorx2f(305, 5120),
+		Vectorx2f(-15, 5255)
 	};
 
-	Polygon fjelbarrier58;
-	fjelbarrier58.vertices = {
-		Vectorx2f(9985, 75),
-		Vectorx2f(9910, 165)
+	Polygon cliffside24;
+	cliffside24.vertices = {
+		Vectorx2f(2310, 3780),
+		Vectorx2f(1895, 3775)
 	};
 
-	Polygon fjelbarrier59;
-	fjelbarrier59.vertices = {
-		Vectorx2f(9910, 165),
-		Vectorx2f(9910, 270)
+	Polygon lowercliffs1;
+	lowercliffs1.vertices = {
+		Vectorx2f(10315, 120),
+		Vectorx2f(10010, 160)
 	};
 
-	Polygon fjelbarrier60;
-	fjelbarrier60.vertices = {
-		Vectorx2f(9910, 270),
-		Vectorx2f(9325, 975)
+	Polygon lowercliffs2;
+	lowercliffs2.vertices = {
+		Vectorx2f(10010, 160),
+		Vectorx2f(9910, 240)
 	};
 
-	Polygon fjelbarrier61;
-	fjelbarrier61.vertices = {
-		Vectorx2f(9325, 995),
-		Vectorx2f(9280, 980)
+	Polygon lowercliffs3;
+	lowercliffs3.vertices = {
+		Vectorx2f(9910, 240),
+		Vectorx2f(9890, 350)
 	};
 
-	Polygon fjelbarrier62;
-	fjelbarrier62.vertices = {
-		Vectorx2f(9280, 980),
-		Vectorx2f(9140, 1105)
+	Polygon lowercliffs4;
+	lowercliffs4.vertices = {
+		Vectorx2f(9890, 350),
+		Vectorx2f(9290, 1045)
 	};
 
-	Polygon fjelbarrier63;
-	fjelbarrier63.vertices = {
-		Vectorx2f(9140, 1105),
-		Vectorx2f(9105, 1160)
+	Polygon lowercliffs5;
+	lowercliffs5.vertices = {
+		Vectorx2f(9290, 1045),
+		Vectorx2f(8875, 1350)
 	};
 
-	Polygon fjelbarrier64;
-	fjelbarrier64.vertices = {
-		Vectorx2f(9105, 1160),
-		Vectorx2f(9000, 1210)
+	Polygon lowercliffs6;
+	lowercliffs6.vertices = {
+		Vectorx2f(8875, 1350),
+		Vectorx2f(8830, 1335)
 	};
 
-	Polygon fjelbarrier65;
-	fjelbarrier65.vertices = {
-		Vectorx2f(9000, 1210),
-		Vectorx2f(8880, 1295)
+	Polygon lowercliffs7;
+	lowercliffs7.vertices = {
+		Vectorx2f(8830, 1335),
+		Vectorx2f(8415, 1675)
 	};
 
-	Polygon fjelbarrier66;
-	fjelbarrier66.vertices = {
-		Vectorx2f(8880, 1295),
-		Vectorx2f(8835, 1270)
+	Polygon lowercliffs8;
+	lowercliffs8.vertices = {
+		Vectorx2f(8415, 1675),
+		Vectorx2f(8445, 1770)
 	};
 
-	Polygon fjelbarrier67;
-	fjelbarrier67.vertices = {
-		Vectorx2f(8835, 1270),
-		Vectorx2f(8690, 1385)
+	Polygon lowercliffs9;
+	lowercliffs9.vertices = {
+		Vectorx2f(8445, 1770),
+		Vectorx2f(8140, 2015)
 	};
 
-	Polygon fjelbarrier68;
-	fjelbarrier68.vertices = {
-		Vectorx2f(8690, 1385),
-		Vectorx2f(8415, 1620)
+	Polygon lowercliffs10;
+	lowercliffs10.vertices = {
+		Vectorx2f(8140, 2015),
+		Vectorx2f(7910, 2115)
 	};
 
-	Polygon fjelbarrier69;
-	fjelbarrier69.vertices = {
-		Vectorx2f(8415, 1620),
-		Vectorx2f(8415, 1720)
+	Polygon lowercliffs11;
+	lowercliffs11.vertices = {
+		Vectorx2f(7065, 2920),
+		Vectorx2f(6905, 3035)
 	};
 
-	Polygon fjelbarrier70;
-	fjelbarrier70.vertices = {
-		Vectorx2f(8415, 1720),
-		Vectorx2f(8285, 1850)
+	Polygon lowercliffs12;
+	lowercliffs12.vertices = {
+		Vectorx2f(6905, 3035),
+		Vectorx2f(6630, 3470)
 	};
 
-	Polygon fjelbarrier71;
-	fjelbarrier71.vertices = {
-		Vectorx2f(8285, 1850),
-		Vectorx2f(8135, 1955)
+	Polygon lowercliffs13;
+	lowercliffs13.vertices = {
+		Vectorx2f(6630, 3470),
+		Vectorx2f(6535, 3435)
 	};
 
-	Polygon fjelbarrier72;
-	fjelbarrier72.vertices = {
-		Vectorx2f(8135, 1955),
-		Vectorx2f(8020, 1990)
+	Polygon lowercliffs14;
+	lowercliffs14.vertices = {
+		Vectorx2f(6535, 3435),
+		Vectorx2f(6385, 3965)
 	};
 
-	Polygon fjelbarrier73;
-	fjelbarrier73.vertices = {
-		Vectorx2f(8020, 1970),
-		Vectorx2f(7930, 2060)
+	Polygon lowercliffs15;
+	lowercliffs15.vertices = {
+		Vectorx2f(6385, 3965),
+		Vectorx2f(6430, 4090)
 	};
 
-	//Bridge
-
-	Polygon fjelbarrier74;
-	fjelbarrier74.vertices = {
-		Vectorx2f(5730, 370),
-		Vectorx2f(5860, 345)
+	Polygon lowercliffs16;
+	lowercliffs16.vertices = {
+		Vectorx2f(6430, 4090),
+		Vectorx2f(6230, 4360)
 	};
 
-	Polygon fjelbarrier75;
-	fjelbarrier75.vertices = {
-		Vectorx2f(5860, 345),
-		Vectorx2f(5970, 355)
+	Polygon lowercliffs17;
+	lowercliffs17.vertices = {
+		Vectorx2f(6230, 4360),
+		Vectorx2f(5635, 5540)
 	};
 
-	Polygon fjelbarrier76;
-	fjelbarrier76.vertices = {
-		Vectorx2f(5970, 325),
-		Vectorx2f(6345, 460)
+	Polygon lowercliffs18;
+	lowercliffs18.vertices = {
+		Vectorx2f(5635, 5540),
+		Vectorx2f(6025, 6005)
 	};
 
-	Polygon fjelbarrier77;
-	fjelbarrier77.vertices = {
-		Vectorx2f(6345, 440),
-		Vectorx2f(6790, 755)
+	Polygon lowercliffs19;
+	lowercliffs19.vertices = {
+		Vectorx2f(6025, 6005),
+		Vectorx2f(8645, 5865)
 	};
 
-	Polygon fjelbarrier78;
-	fjelbarrier78.vertices = {
-		Vectorx2f(6790, 755),
-		Vectorx2f(7280, 1235)
+	Polygon lowercliffs20;
+	lowercliffs20.vertices = {
+		Vectorx2f(8645, 5865),
+		Vectorx2f(9140, 5695)
 	};
 
-	Polygon fjelbarrier79;
-	fjelbarrier79.vertices = {
-		Vectorx2f(7280, 1235),
-		Vectorx2f(7665, 1680)
+	Polygon lowercliffs21;
+	lowercliffs21.vertices = {
+		Vectorx2f(9140, 5695),
+		Vectorx2f(10205, 5990)
 	};
 
-	Polygon fjelbarrier80;
-	fjelbarrier80.vertices = {
-		Vectorx2f(7665, 1680),
-		Vectorx2f(7920, 2060)
+	Polygon lowercliffs22;
+	lowercliffs22.vertices = {
+		Vectorx2f(10205, 5990),
+		Vectorx2f(10665, 6020)
 	};
 
-	Polygon fjelbarrier81;
-	fjelbarrier81.vertices = {
-		Vectorx2f(7105, 2845),
-		Vectorx2f(6705, 2200)
+	Polygon west1;
+	west1.vertices = {
+		Vectorx2f(10670, 6015),
+		Vectorx2f(10670, 3895)
 	};
 
-	Polygon fjelbarrier82;
-	fjelbarrier82.vertices = {
-		Vectorx2f(6705, 2200),
-		Vectorx2f(5785, 1445)
+	Polygon west2;
+	west2.vertices = {
+		Vectorx2f(10670, 3895),
+		Vectorx2f(9860, 3820)
 	};
 
-	Polygon fjelbarrier83;
-	fjelbarrier83.vertices = {
-		Vectorx2f(5785, 1445),
-		Vectorx2f(5225, 1250)
+	Polygon west3;
+	west3.vertices = {
+		Vectorx2f(9860, 3820),
+		Vectorx2f(9725, 3385)
 	};
+
+	Polygon west4;
+	west4.vertices = {
+		Vectorx2f(9725, 3385),
+		Vectorx2f(9860, 2620)
+	};
+
+	Polygon west5;
+	west5.vertices = {
+		Vectorx2f(9860, 2620),
+		Vectorx2f(9960, 2305)
+	};
+
+	Polygon west6;
+	west6.vertices = {
+		Vectorx2f(9960, 2305),
+		Vectorx2f(10290, 1950)
+	};
+
+	Polygon west7;
+	west7.vertices = {
+		Vectorx2f(10290, 1950),
+		Vectorx2f(9455, 1075)
+	};
+
+	Polygon west8;
+	west8.vertices = {
+		Vectorx2f(9455, 1075),
+		Vectorx2f(9750, 780)
+	};
+
+	Polygon west9;
+	west9.vertices = {
+		Vectorx2f(9750, 780),
+		Vectorx2f(10245, 1275)
+	};
+
+	Polygon west10;
+	west10.vertices = {
+		Vectorx2f(10245, 1275),
+		Vectorx2f(10245, 120)
+	};
+
+	Polygon bridge1;
+	bridge1.vertices = {
+		Vectorx2f(7100, 2900),
+		Vectorx2f(6705, 2255)
+	};
+
+	Polygon bridge2;
+	bridge2.vertices = {
+		Vectorx2f(6705, 2255),
+		Vectorx2f(6345, 1910)
+	};
+
+	Polygon bridge3;
+	bridge3.vertices = {
+		Vectorx2f(6345, 1910),
+		Vectorx2f(5605, 1395)
+	};
+
+	Polygon bridge4;
+	bridge4.vertices = {
+		Vectorx2f(5605, 1395),
+		Vectorx2f(5220, 1335)
+	};
+
+	Polygon bridge5;
+	bridge5.vertices = {
+		Vectorx2f(5655, 430),
+		Vectorx2f(5855, 385)
+	};
+
+	Polygon bridge6;
+	bridge6.vertices = {
+		Vectorx2f(5855, 385),
+		Vectorx2f(5975, 395)
+	};
+
+	Polygon bridge7;
+	bridge7.vertices = {
+		Vectorx2f(5975, 395),
+		Vectorx2f(6350, 535)
+	};
+
+	Polygon bridge8;
+	bridge8.vertices = {
+		Vectorx2f(6350, 535),
+		Vectorx2f(6795, 850)
+	};
+
+	Polygon bridge9;
+	bridge9.vertices = {
+		Vectorx2f(6795, 850),
+		Vectorx2f(7280, 1310)
+	};
+
+	Polygon bridge10;
+	bridge10.vertices = {
+		Vectorx2f(7280, 1310),
+		Vectorx2f(7665, 1760)
+	};
+
+	Polygon bridge11;
+	bridge11.vertices = {
+		Vectorx2f(7665, 1760),
+		Vectorx2f(7975, 2240)
+	};
+
+	Polygon tree1;
+	tree1.vertices = {
+		Vectorx2f(6520, 5655),
+		Vectorx2f(6520, 5955)
+	};
+
+	Polygon tree2;
+	tree2.vertices = {
+		Vectorx2f(6520, 5655),
+		Vectorx2f(5685, 5655)
+	};
+
+	
+
+	
 
 	//wilderness1 barriers
 
@@ -1102,6 +2439,12 @@ int main()
 		Vectorx2f(-30, -4270)
 	};
 
+	Polygon fjeltavernwall1;
+	fjeltavernwall1.vertices = {
+		Vectorx2f(300, 2415),
+		Vectorx2f(2565, 1630)
+	};
+
 
 
 
@@ -1146,8 +2489,20 @@ int main()
 	int repose = 0;
 	float playerSpeed = 5.0f;
 	int barrelhealth = 2;
-	int area = 3;
+	bool fireplace = true;
+
 	
+	
+	//Vectors
+	
+	Vector2f playerCenter;
+	Vector2f playerRight;
+	Vector2f playerLeft;
+	Vector2f enemyxCenter;
+	Vector2f mousePosWindow;
+	Vector2f aimDir;
+	Vector2f aimDirNorm;
+	Vector2f loc;
 	
 	RenderWindow window(VideoMode(1400, 1400), "Shadows of Vaalundroth", Style::Default);
 	window.setFramerateLimit(60);
@@ -1175,6 +2530,31 @@ int main()
     sf::Sprite fjelenvar;
     fjelenvar.setTexture(fjelenvartxtr);
     fjelenvar.setPosition(0, -4200);
+
+	//fjeltaverninn
+	sf::Texture fjeltaverntxtr;
+	fjeltaverntxtr.loadFromFile("/home/z3ta/c++/SoV/images/backgrounds/fjeltaverninn.png");
+	sf::Sprite fjeltaverninn;
+	fjeltaverninn.setTexture(fjeltaverntxtr);
+	fjeltaverninn.setPosition(2700, 1700);
+	fjeltaverninn.setRotation(71);
+
+	//fjeltavernfireplace
+	sf::IntRect fjelhearthSourceSprite(0, 0, 414, 155);
+	sf::Texture fjelfireplacetxtr;
+	fjelfireplacetxtr.loadFromFile("/home/z3ta/c++/SoV/images/sprites/fireplacespritesheet.png");
+	sf::Sprite fjelfireplace;
+	fjelfireplace.setTexture(fjelfireplacetxtr);
+	fjelfireplace.setPosition(2940, 2400);
+	fjelfireplace.setRotation(71);
+
+	//fjelhearthfirebox
+	sf::Texture fjelfireboxtxtr;
+	fjelfireboxtxtr.loadFromFile("/home/z3ta/c++/SoV/images/sprites/fireplacefirebox.png");
+	sf::Sprite fjelfirebox;
+	fjelfirebox.setTexture(fjelfireboxtxtr);
+	fjelfirebox.setPosition(2940, 2400);
+	fjelfirebox.setRotation(71);
 	
 	//fhouse1
 	sf::Texture fhouse1txtr;
@@ -1192,8 +2572,7 @@ int main()
 	wilderness1.setTexture(wilderness1txtr);
 	wilderness1.setPosition(0, -4200);
 
-	//Player Coordinates
-	sf::Vector2f playerPosition(2700, 1700);
+	sf::Vector2f minimapPosition(playerCenter.x, playerCenter.y);
 	sf::Vector2f xPosition(1500, 1500);
 	sf::Vector2f xAdjust(104, 140);
 	//Object Coordinates
@@ -1205,20 +2584,28 @@ int main()
 	sf::Vector2f whouseTopPosition(6500, 4184);
 	sf::Vector2f wtowerTopPosition(8453, 1015);
 	sf::Vector2f bhouseTopPosition(6732, -3775);
+	sf::Vector2f fjeltreePosition(4995, 3455);
+	sf::Vector2f fjeldoor1Position(905, -3473);
+
 	//Player
+	sf::IntRect rectSourceSprite(0, 0, 127, 127);
     sf::Texture playertxtr;
     playertxtr.loadFromFile("/home/z3ta/c++/SoV/images/sprites/playerspritesheet.png");
-    sf::IntRect rectSourceSprite(0, 0, 127, 127);
+	player.setTexture(playertxtr);
+	player.setPosition(playerPosition);
+	
 	sf::IntRect barrelSourceSprite(0, 0, 71, 98);
 	sf::IntRect xSprite(0, 0, 24, 19);
-    sf::Sprite player(playertxtr, rectSourceSprite);
+    
 	sf::Sprite xcollision(playertxtr, xSprite);
-	player.setPosition(playerPosition);
+	
+	sf::Vector2f mapPosition(500, -200);
 	sf::Texture collisionxtxtr;
 	collisionxtxtr.loadFromFile("/home/z3ta/c++/SoV/images/sprites/playerspritesheet.png");
 	
     sf::Clock clock;
-    player.setTexture(playertxtr);
+	sf::Clock clockx;
+	sf::Clock fireclock;
 	
 	xcollision.setTexture(playertxtr);
 	xcollision.setPosition(xPosition);
@@ -1272,82 +2659,225 @@ int main()
 	sf::Sprite bhousetop(bhousetoptxtr);
 	bhousetop.setPosition(bhouseTopPosition);
 
-	//Vectors
-	Vector2f playerCenter;
-	Vector2f playerRight;
-	Vector2f playerLeft;
-	Vector2f enemyxCenter;
-	Vector2f mousePosWindow;
-	Vector2f aimDir;
-	Vector2f aimDirNorm;
-	Vector2f loc;
+	//fjeltree
+	sf::Texture fjeltreetxtr;
+	fjeltreetxtr.loadFromFile("/home/z3ta/c++/SoV/images/sprites/fjeltreex.png");
+	sf::Sprite fjeltree(fjeltreetxtr);
+	fjeltree.setPosition(fjeltreePosition);
 
+	//fjeltaverndoor
+	sf::IntRect door1SourceSprite(0, 0, 338, 281);
+	sf::Texture door1txtr;
+	door1txtr.loadFromFile("/home/z3ta/c++/SoV/images/sprites/doorspritesheet1.png");
+	sf::Sprite taverndoor(door1txtr, door1SourceSprite);
+	taverndoor.setPosition(fjeldoor1Position);
+
+	bool isPlayerFrozen = false;
 	while (window.isOpen())
 	{
 		Event event;
 		Polygon playerOriginal = collisionx;
 		Polygon attackxOriginal = attackx;
-		
+		sf::Vector2f playerPos = player.getPosition();  // Get the player's position
+		sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+		NPC npc(660.f, 2480.f, font, window);
 		while (window.pollEvent(event))
 		{
 			if (event.type == Event::Closed)
 				window.close();
+			
+			
+
+		}
+
+		if (hasPlayed == false){
+			playIntroMovie(window);
 		}
         
 		//Directional rotation
-        if (sf::Keyboard::isKeyPressed(Keyboard::W))
+        if (sf::Keyboard::isKeyPressed(Keyboard::W) && playerHealth > 0)
 		{
 			direction = 5;
 			idle = 0;
 		}
 		
-		if (sf::Keyboard::isKeyPressed(Keyboard::D))
+		if (sf::Keyboard::isKeyPressed(Keyboard::D) && playerHealth > 0)
 		{
 			direction = 7;
 			idle = 0;
 			
 		}
 		
-		if (sf::Keyboard::isKeyPressed(Keyboard::S))
+		if (sf::Keyboard::isKeyPressed(Keyboard::S) && playerHealth > 0)
 		{
 			direction = 1;
 			idle = 0;
 			
 		}
 		
-		if (sf::Keyboard::isKeyPressed(Keyboard::A))
+		if (sf::Keyboard::isKeyPressed(Keyboard::A) && playerHealth > 0)
 		{
 			direction = 3;
 			idle = 0;
 			
 		}
 		
-		if (sf::Keyboard::isKeyPressed(Keyboard::W) && (Keyboard::isKeyPressed(sf::Keyboard::A)))
+		if (sf::Keyboard::isKeyPressed(Keyboard::W) && (Keyboard::isKeyPressed(sf::Keyboard::A)) && playerHealth > 0)
 		{
 			direction = 4;
 			idle = 0;
 			
 		}
 		
-		if (sf::Keyboard::isKeyPressed(Keyboard::W) && (sf::Keyboard::isKeyPressed(Keyboard::D)))
+		if (sf::Keyboard::isKeyPressed(Keyboard::W) && (sf::Keyboard::isKeyPressed(Keyboard::D)) && playerHealth > 0)
 		{
 			direction = 6;
 			idle = 0;
 			
 		}
 		
-		if (sf::Keyboard::isKeyPressed(Keyboard::D) && (sf::Keyboard::isKeyPressed(Keyboard::S)))
+		if (sf::Keyboard::isKeyPressed(Keyboard::D) && (sf::Keyboard::isKeyPressed(Keyboard::S)) && playerHealth > 0)
 		{
 			direction = 8;
 			idle = 0;
 			
 		}
 		
-		if (sf::Keyboard::isKeyPressed(Keyboard::S) && (sf::Keyboard::isKeyPressed(Keyboard::A)))
+		if (sf::Keyboard::isKeyPressed(Keyboard::S) && (sf::Keyboard::isKeyPressed(Keyboard::A)) && playerHealth > 0)
 		{
 			direction = 2;
 			idle = 0;
 			
+		}
+
+		//Death animations
+
+		if (clock.getElapsedTime().asSeconds() > 0.1 && playerHealth <= 0 && direction == 1){
+			idle = 1;
+			playerSpeed = 0;
+			rectSourceSprite.height = 127;
+			rectSourceSprite.top = 3048;
+			
+			if (rectSourceSprite.left >= 2413){
+				rectSourceSprite.left = 2413;
+			}
+
+			else
+				rectSourceSprite.left += 127;
+			player.setTextureRect(rectSourceSprite);
+			clock.restart();
+		}
+
+		if (clock.getElapsedTime().asSeconds() > 0.1 && playerHealth <= 0 && direction == 2){
+			idle = 1;
+			playerSpeed = 0;
+			rectSourceSprite.height = 127;
+			rectSourceSprite.top = 3175;
+			
+			if (rectSourceSprite.left >= 2413){
+				rectSourceSprite.left = 2413;
+			}
+
+			else
+				rectSourceSprite.left += 127;
+			player.setTextureRect(rectSourceSprite);
+			clock.restart();
+		}
+
+		if (clock.getElapsedTime().asSeconds() > 0.1 && playerHealth <= 0 && direction == 3){
+			idle = 1;
+			playerSpeed = 0;
+			rectSourceSprite.height = 127;
+			rectSourceSprite.top = 3302;
+			
+			if (rectSourceSprite.left >= 2413){
+				rectSourceSprite.left = 2413;
+			}
+
+			else
+				rectSourceSprite.left += 127;
+			player.setTextureRect(rectSourceSprite);
+			clock.restart();
+		}
+
+		if (clock.getElapsedTime().asSeconds() > 0.1 && playerHealth <= 0 && direction == 4){
+			idle = 1;
+			playerSpeed = 0;
+			rectSourceSprite.height = 127;
+			rectSourceSprite.top = 3429;
+			
+			if (rectSourceSprite.left >= 2413){
+				rectSourceSprite.left = 2413;
+			}
+
+			else
+				rectSourceSprite.left += 127;
+			player.setTextureRect(rectSourceSprite);
+			clock.restart();
+		}
+
+		if (clock.getElapsedTime().asSeconds() > 0.1 && playerHealth <= 0 && direction == 5){
+			idle = 1;
+			playerSpeed = 0;
+			rectSourceSprite.height = 127;
+			rectSourceSprite.top = 3556;
+			
+			if (rectSourceSprite.left >= 2413){
+				rectSourceSprite.left = 2413;
+			}
+
+			else
+				rectSourceSprite.left += 127;
+			player.setTextureRect(rectSourceSprite);
+			clock.restart();
+		}
+
+		if (clock.getElapsedTime().asSeconds() > 0.1 && playerHealth <= 0 && direction == 6){
+			idle = 1;
+			playerSpeed = 0;
+			rectSourceSprite.height = 127;
+			rectSourceSprite.top = 3683;
+			
+			if (rectSourceSprite.left >= 2413){
+				rectSourceSprite.left = 2413;
+			}
+
+			else
+				rectSourceSprite.left += 127;
+			player.setTextureRect(rectSourceSprite);
+			clock.restart();
+		}
+
+		if (clock.getElapsedTime().asSeconds() > 0.1 && playerHealth <= 0 && direction == 7){
+			idle = 1;
+			playerSpeed = 0;
+			rectSourceSprite.height = 127;
+			rectSourceSprite.top = 3810;
+			
+			if (rectSourceSprite.left >= 2413){
+				rectSourceSprite.left = 2413;
+			}
+
+			else
+				rectSourceSprite.left += 127;
+			player.setTextureRect(rectSourceSprite);
+			clock.restart();
+		}
+
+		if (clock.getElapsedTime().asSeconds() > 0.1 && playerHealth <= 0 && direction == 8){
+			idle = 1;
+			playerSpeed = 0;
+			rectSourceSprite.height = 127;
+			rectSourceSprite.top = 3937;
+			
+			if (rectSourceSprite.left >= 2413){
+				rectSourceSprite.left = 2413;
+			}
+
+			else
+				rectSourceSprite.left += 127;
+			player.setTextureRect(rectSourceSprite);
+			clock.restart();
 		}
 
 		//Walking animations
@@ -1482,7 +3012,7 @@ int main()
 				
 			}
 
-		if (idle == 1 && direction == 1 && isMoving == false){
+		if (idle == 1 && direction == 1 && isMoving == false && playerHealth > 0){
 			rectSourceSprite.height = 127;
 			rectSourceSprite.top = 1016;
 			rectSourceSprite.left = 0;
@@ -1495,7 +3025,7 @@ int main()
 			clock.restart();
 		}
 
-		if (idle == 1 && direction == 2 && isMoving == false){
+		if (idle == 1 && direction == 2 && isMoving == false && playerHealth > 0){
 			rectSourceSprite.height = 127;
 			rectSourceSprite.top = 1143;
 			rectSourceSprite.left = 0;
@@ -1508,7 +3038,7 @@ int main()
 			clock.restart();
 		}
 
-		if (idle == 1 && direction == 3 && isMoving == false){
+		if (idle == 1 && direction == 3 && isMoving == false && playerHealth > 0){
 			rectSourceSprite.height = 127;
 			rectSourceSprite.top = 1270;
 			rectSourceSprite.left = 0;
@@ -1521,7 +3051,7 @@ int main()
 			clock.restart();
 		}
 
-		if (idle == 1 && direction == 4 && isMoving == false){
+		if (idle == 1 && direction == 4 && isMoving == false && playerHealth > 0){
 			rectSourceSprite.height = 127;
 			rectSourceSprite.top = 1397;
 			rectSourceSprite.left = 0;
@@ -1534,7 +3064,7 @@ int main()
 			clock.restart();
 		}
 
-		if (idle == 1 && direction == 5 && isMoving == false){
+		if (idle == 1 && direction == 5 && isMoving == false && playerHealth > 0){
 			rectSourceSprite.height = 127;
 			rectSourceSprite.top = 1524;
 			rectSourceSprite.left = 0;
@@ -1547,7 +3077,7 @@ int main()
 			clock.restart();
 		}
 
-		if (idle == 1 && direction == 6 && isMoving == false){
+		if (idle == 1 && direction == 6 && isMoving == false && playerHealth > 0){
 			rectSourceSprite.height = 127;
 			rectSourceSprite.top = 1651;
 			rectSourceSprite.left = 0;
@@ -1560,7 +3090,7 @@ int main()
 			clock.restart();
 		}
 
-		if (idle == 1 && direction == 7 && isMoving == false){
+		if (idle == 1 && direction == 7 && isMoving == false && playerHealth > 0){
 			rectSourceSprite.height = 127;
 			rectSourceSprite.top = 1778;
 			rectSourceSprite.left = 0;
@@ -1573,7 +3103,7 @@ int main()
 			clock.restart();
 		}
 
-		if (idle == 1 && direction == 8 && isMoving == false){
+		if (idle == 1 && direction == 8 && isMoving == false && playerHealth > 0){
 			rectSourceSprite.height = 127;
 			rectSourceSprite.top = 1905;
 			rectSourceSprite.left = 0;
@@ -1586,109 +3116,14 @@ int main()
 			clock.restart();
 		}
 
-		if (isMoving == true && direction == 1){
-			rectSourceSprite.height = 127;
-			rectSourceSprite.top = 2032;
-			
-			if (rectSourceSprite.left >= 700)
-			    rectSourceSprite.left = 0;
-			else
-			    rectSourceSprite.left += 127;
-			player.setTextureRect(rectSourceSprite);
-			clock.restart();
 		}
 
-		if (isMoving == true && direction == 2){
-			rectSourceSprite.height = 127;
-			rectSourceSprite.top = 2159;
-			
-			if (rectSourceSprite.left >= 700)
-			    rectSourceSprite.left = 0;
-			else
-			    rectSourceSprite.left += 127;
-			player.setTextureRect(rectSourceSprite);
-			clock.restart();
-		}
-
-		if (isMoving == true && direction == 3){
-			rectSourceSprite.height = 127;
-			rectSourceSprite.top = 2286;
-			
-			if (rectSourceSprite.left >= 700)
-			    rectSourceSprite.left = 0;
-			else
-			    rectSourceSprite.left += 127;
-			player.setTextureRect(rectSourceSprite);
-			clock.restart();
-		}
-
-		if (isMoving == true && direction == 4){
-			rectSourceSprite.height = 127;
-			rectSourceSprite.top = 2413;
-			
-			if (rectSourceSprite.left >= 700)
-			    rectSourceSprite.left = 0;
-			else
-			    rectSourceSprite.left += 127;
-			player.setTextureRect(rectSourceSprite);
-			clock.restart();
-		}
-
-		if (isMoving == true && direction == 5){
-			rectSourceSprite.height = 127;
-			rectSourceSprite.top = 2540;
-			
-			if (rectSourceSprite.left >= 700)
-			    rectSourceSprite.left = 0;
-			else
-			    rectSourceSprite.left += 127;
-			player.setTextureRect(rectSourceSprite);
-			clock.restart();
-		}
-
-		if (isMoving == true && direction == 6){
-			rectSourceSprite.height = 127;
-			rectSourceSprite.top = 2667;
-			
-			if (rectSourceSprite.left >= 700)
-			    rectSourceSprite.left = 0;
-			else
-			    rectSourceSprite.left += 127;
-			player.setTextureRect(rectSourceSprite);
-			clock.restart();
-		}
-
-		if (isMoving == true && direction == 7){
-			rectSourceSprite.height = 127;
-			rectSourceSprite.top = 2794;
-			
-			if (rectSourceSprite.left >= 700)
-			    rectSourceSprite.left = 0;
-			else
-			    rectSourceSprite.left += 127;
-			player.setTextureRect(rectSourceSprite);
-			clock.restart();
-		}
-
-		if (isMoving == true && direction == 8){
-			rectSourceSprite.height = 127;
-			rectSourceSprite.top = 2921;
-			
-			if (rectSourceSprite.left >= 700)
-			    rectSourceSprite.left = 0;
-			else
-			    rectSourceSprite.left += 127;
-			player.setTextureRect(rectSourceSprite);
-			clock.restart();
-		}
-
-		}
 		//Attack animations
-		
         if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && clock.getElapsedTime().asSeconds() > 0.1)
         {
 			
-			
+			std::cout << "PositionX: " << playerCenter.x << std::endl;
+			std::cout << "PositionY: " << playerCenter.y << std::endl;
 			if (direction == 1)
 			{
 				rectSourceSprite.height = 127;
@@ -1697,13 +3132,22 @@ int main()
 					
 			        rectSourceSprite.left = 0;
 					round = true;
+					
 				}
 			    else
 			        rectSourceSprite.left += 127;
 
 				if (rectSourceSprite.left == 0 && round == true){
 					attacking = true;
+					playerAttackRoll = generateRandomNumber();
+					std::cout << "Player Attack Role: " << playerAttackRoll << std::endl;
 					
+					if (playerAttackRoll >= 17){
+						if (area == 3){
+							enemy.updatehealth(playerCenter.x, playerCenter.y);
+							enemy1.updatehealth(playerCenter.x, playerCenter.y);
+						}
+					}
 				}
 					
 				else
@@ -1724,7 +3168,14 @@ int main()
 			        rectSourceSprite.left += 127;
 				if (rectSourceSprite.left == 0){
 					attacking = true;
-					
+					playerAttackRoll = generateRandomNumber();
+					std::cout << "Player Attack Role: " << playerAttackRoll << std::endl;
+					if (playerAttackRoll >= 17){
+						if (area == 3){
+							enemy.updatehealth(playerCenter.x, playerCenter.y);
+							enemy1.updatehealth(playerCenter.x, playerCenter.y);
+						}
+					}
 				}
 				else
 					attacking = false;
@@ -1744,7 +3195,14 @@ int main()
 			        rectSourceSprite.left += 127;
 				if (rectSourceSprite.left == 0){
 					attacking = true;
-					
+					playerAttackRoll = generateRandomNumber();
+					std::cout << "Player Attack Role: " << playerAttackRoll << std::endl;
+					if (playerAttackRoll >= 17){
+						if (area == 3){
+							enemy.updatehealth(playerCenter.x, playerCenter.y);
+							enemy1.updatehealth(playerCenter.x, playerCenter.y);
+						}
+					}
 				}
 				else
 					attacking = false;
@@ -1764,7 +3222,14 @@ int main()
 			        rectSourceSprite.left += 127;
 				if (rectSourceSprite.left == 0){
 					attacking = true;
-					
+					playerAttackRoll = generateRandomNumber();
+					std::cout << "Player Attack Role: " << playerAttackRoll << std::endl;
+					if (playerAttackRoll >= 17){
+						if (area == 3){
+							enemy.updatehealth(playerCenter.x, playerCenter.y);
+							enemy1.updatehealth(playerCenter.x, playerCenter.y);
+						}
+					}
 				}
 				else
 					attacking = false;
@@ -1784,7 +3249,14 @@ int main()
 			        rectSourceSprite.left += 127;
 				if (rectSourceSprite.left == 0){
 					attacking = true;
-					
+					playerAttackRoll = generateRandomNumber();
+					std::cout << "Player Attack Role: " << playerAttackRoll << std::endl;
+					if (playerAttackRoll >= 17){
+						if (area == 3){
+							enemy.updatehealth(playerCenter.x, playerCenter.y);
+							enemy1.updatehealth(playerCenter.x, playerCenter.y);
+						}
+					}
 				}
 				else
 					attacking = false;
@@ -1804,7 +3276,14 @@ int main()
 			        rectSourceSprite.left += 127;
 				if (rectSourceSprite.left == 0){
 					attacking = true;
-					
+					playerAttackRoll = generateRandomNumber();
+					std::cout << "Player Attack Role: " << playerAttackRoll << std::endl;
+					if (playerAttackRoll >= 17){
+						if (area == 3){
+							enemy.updatehealth(playerCenter.x, playerCenter.y);
+							enemy1.updatehealth(playerCenter.x, playerCenter.y);
+						}
+					}
 				}
 				else
 					attacking = false;
@@ -1824,7 +3303,14 @@ int main()
 			        rectSourceSprite.left += 127;
 				if (rectSourceSprite.left == 0){
 					attacking = true;
-					
+					playerAttackRoll = generateRandomNumber();
+					std::cout << "Player Attack Role: " << playerAttackRoll << std::endl;
+					if (playerAttackRoll >= 17){
+						if (area == 3){
+							enemy.updatehealth(playerCenter.x, playerCenter.y);
+							enemy1.updatehealth(playerCenter.x, playerCenter.y);
+						}
+					}
 				}
 				else
 					attacking = false;
@@ -1844,15 +3330,35 @@ int main()
 			        rectSourceSprite.left += 127;
 				if (rectSourceSprite.left == 0){
 					attacking = true;
-					
+					playerAttackRoll = generateRandomNumber();
+					std::cout << "Player Attack Role: " << playerAttackRoll << std::endl;
+					if (playerAttackRoll >= 17){
+						if (area == 3){
+							enemy.updatehealth(playerCenter.x, playerCenter.y);
+							enemy1.updatehealth(playerCenter.x, playerCenter.y);
+						}
+					}
 				}
 				else
 					attacking = false;
 			    player.setTextureRect(rectSourceSprite);
 			    clock.restart();
 			}
+			
 	    
         }
+
+		if (fireplace && fireclock.getElapsedTime().asSeconds() > 0.2){
+			if (fjelhearthSourceSprite.left >= 2478){
+				fjelhearthSourceSprite.left = 0;
+			}
+
+			else{
+				fjelhearthSourceSprite.left += 414;
+			}
+			fjelfireplace.setTextureRect(fjelhearthSourceSprite);
+			fireclock.restart();
+		}
 
 		if (barrelhealth <= 0 && clock.getElapsedTime().asSeconds() > 0.1)
 		{
@@ -1871,11 +3377,6 @@ int main()
 		playerLeft = Vector2f(player.getPosition());
 		
 		mousePosWindow = Vector2f(Mouse::getPosition(window));
-		
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Left)){
-			
-			std::cout << "Position: (" << playerCenter.x << ", " << playerCenter.y << ")" << std::endl;
-		}
 
 		aimDir = mousePosWindow - playerCenter;
 		float aimDirMagnitude = sqrt(pow(aimDir.x, 2) + pow(aimDir.y, 2));
@@ -1899,45 +3400,31 @@ int main()
 		const auto prevPos = player.getPosition();
 
 		// Move player with arrow keys
-        if (Keyboard::isKeyPressed(Keyboard::A)) {
+        if (Keyboard::isKeyPressed(Keyboard::A) && !isPlayerFrozen) {
 			player.move(-playerSpeed, 0.f);
-            for (auto& vertex : collisionx.vertices) {
-                vertex.x -= 5; // Move left
-            }
-			for (auto& vertex : attackx.vertices) {
-                vertex.x -= 5; // Move left
-            }
         }
-        if (Keyboard::isKeyPressed(Keyboard::D)) {
+        if (Keyboard::isKeyPressed(Keyboard::D) && !isPlayerFrozen) {
 			player.move(playerSpeed, 0.f);
-            for (auto& vertex : collisionx.vertices) {
-                vertex.x += 5; // Move right
-            }
-			for (auto& vertex : attackx.vertices) {
-                vertex.x += 5; // Move right
-            }
         }
-        if (Keyboard::isKeyPressed(Keyboard::W)) {
+        if (Keyboard::isKeyPressed(Keyboard::W) && !isPlayerFrozen) {
 			player.move(0.f, -playerSpeed);
-            for (auto& vertex : collisionx.vertices) {
-                vertex.y -= 5; // Move up
-            }
-			for (auto& vertex : attackx.vertices) {
-                vertex.y -= 5; // Move up
-            }
         }
-        if (Keyboard::isKeyPressed(Keyboard::S)) {
+        if (Keyboard::isKeyPressed(Keyboard::S) && !isPlayerFrozen) {
 			player.move(0.f, playerSpeed);
-            for (auto& vertex : collisionx.vertices) {
-                vertex.y += 5; // Move down
-            }
-			for (auto& vertex : attackx.vertices) {
-                vertex.y += 5; // Move down
-            }
         }
+
 		else{
 			idle = 1;
 		}
+
+		// Adjust the offset based on your player's height and desired collision position
+		float collisionOffsetY = 100.0f; // Adjust this value to move the collision box down
+		Vectorx2f adjustedPosition = Vectorx2f::fromSF(player.getPosition());
+		adjustedPosition.y += collisionOffsetY; // Move the collision box down
+		adjustedPosition.x += collisionOffsetY;
+		// Set the collision position to the adjusted position
+		collisionx.setPosition(adjustedPosition);
+		
 
 		
 		
@@ -2115,7 +3602,9 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier1, collisionx, collisionNormal) && area == 2) {
+		//fjelenvar
+
+		if (checkPolygonCollision(fjelhouse1, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2124,7 +3613,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier2, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(fjelhouse2, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2133,7 +3622,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier3, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(westbarrier, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2142,7 +3631,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier4, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(northwestbarrier1, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2151,7 +3640,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier5, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(tavernbarrier, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2160,7 +3649,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier6, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(northwestbarrier2, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2169,7 +3658,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier7, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(northbarrier1, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2178,7 +3667,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier8, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(northbarrier2, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2187,7 +3676,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier9, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(northbarrier3, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2196,7 +3685,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier10, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(northbarrier4, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2205,7 +3694,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier11, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(northbarrier5, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2214,7 +3703,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier12, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(northbarrier6, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2223,7 +3712,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier13, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(northbarrier7, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2232,7 +3721,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier14, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(northbarrier8, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2241,7 +3730,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier15, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(northbarrier9, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2250,7 +3739,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier16, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(northbarrier10, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2259,7 +3748,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier17, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(northbarrier11, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2268,7 +3757,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier18, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(northbarrier12, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2277,7 +3766,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier19, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(northbarrier13, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2286,7 +3775,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier20, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(blacksmithshouse1, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2295,7 +3784,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier21, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(blacksmithshouse2, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2304,7 +3793,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier22, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(blacksmithshouse3, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2313,9 +3802,331 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
+		if (checkPolygonCollision(blacksmithshouse4, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(cliffside1, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(cliffside2, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(cliffside3, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(cliffside4, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(cliffside5, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(cliffside6, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(cliffside7, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(cliffside8, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(cliffside9, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(cliffside10, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(cliffside11, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(cliffside12, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(cliffside13, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(cliffside14, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(cliffside15, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(cliffside16, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(cliffside17, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(cliffside18, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(cliffside19, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(cliffside20, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(cliffside21, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(cliffside22, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(cliffside23, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(cliffside24, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(lowercliffs1, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(lowercliffs2, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(lowercliffs3, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(lowercliffs4, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(lowercliffs5, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(lowercliffs6, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(lowercliffs7, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(lowercliffs8, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(lowercliffs9, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(lowercliffs10, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+		if (checkPolygonCollision(lowercliffs11, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
 		
-
-		if (checkPolygonCollision(fjelbarrier24, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(lowercliffs12, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2324,7 +4135,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier25, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(lowercliffs13, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2333,7 +4144,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier26, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(lowercliffs14, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2342,7 +4153,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier27, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(lowercliffs15, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2351,7 +4162,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier28, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(lowercliffs16, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2360,7 +4171,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier29, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(lowercliffs17, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2369,7 +4180,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier30, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(lowercliffs18, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2378,7 +4189,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier31, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(lowercliffs19, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2387,7 +4198,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier32, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(lowercliffs20, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2396,7 +4207,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier33, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(lowercliffs21, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2405,7 +4216,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier34, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(lowercliffs22, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2414,7 +4225,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier35, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(west1, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2423,7 +4234,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier36, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(west2, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2432,7 +4243,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier37, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(west3, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2441,7 +4252,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier38, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(west4, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2450,7 +4261,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier39, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(west5, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2459,7 +4270,16 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier40, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(west6, collisionx, collisionNormal) && area == 2) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+		
+		if (checkPolygonCollision(west7, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2468,7 +4288,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier41, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(west8, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2477,7 +4297,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier42, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(west9, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2486,7 +4306,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier43, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(west10, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2495,7 +4315,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier44, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(bridge1, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2504,7 +4324,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier45, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(bridge2, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2513,7 +4333,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier46, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(bridge3, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2522,7 +4342,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier47, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(bridge4, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2531,7 +4351,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier48, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(bridge5, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2540,7 +4360,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier49, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(bridge6, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2549,7 +4369,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier50, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(bridge7, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2558,7 +4378,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier51, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(bridge8, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2567,7 +4387,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier52, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(bridge9, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2576,7 +4396,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier53, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(bridge10, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2585,7 +4405,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier54, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(bridge11, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2594,7 +4414,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier55, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(tree1, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -2603,250 +4423,7 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
-		if (checkPolygonCollision(fjelbarrier56, collisionx, collisionNormal) && area == 2) {
-            // If a collision is detected, revert to the original position
-			
-            collisionx = playerOriginal; // Reset player position
-			attackx = attackxOriginal;
-			player.setPosition(prevPos);
-            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
-        }
-
-		if (checkPolygonCollision(fjelbarrier57, collisionx, collisionNormal) && area == 2) {
-            // If a collision is detected, revert to the original position
-			
-            collisionx = playerOriginal; // Reset player position
-			attackx = attackxOriginal;
-			player.setPosition(prevPos);
-            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
-        }
-
-		if (checkPolygonCollision(fjelbarrier58, collisionx, collisionNormal) && area == 2) {
-            // If a collision is detected, revert to the original position
-			
-            collisionx = playerOriginal; // Reset player position
-			attackx = attackxOriginal;
-			player.setPosition(prevPos);
-            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
-        }
-
-		if (checkPolygonCollision(fjelbarrier59, collisionx, collisionNormal) && area == 2) {
-            // If a collision is detected, revert to the original position
-			
-            collisionx = playerOriginal; // Reset player position
-			attackx = attackxOriginal;
-			player.setPosition(prevPos);
-            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
-        }
-
-		if (checkPolygonCollision(fjelbarrier60, collisionx, collisionNormal) && area == 2) {
-            // If a collision is detected, revert to the original position
-			
-            collisionx = playerOriginal; // Reset player position
-			attackx = attackxOriginal;
-			player.setPosition(prevPos);
-            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
-        }
-
-		if (checkPolygonCollision(fjelbarrier61, collisionx, collisionNormal) && area == 2) {
-            // If a collision is detected, revert to the original position
-			
-            collisionx = playerOriginal; // Reset player position
-			attackx = attackxOriginal;
-			player.setPosition(prevPos);
-            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
-        }
-
-		if (checkPolygonCollision(fjelbarrier62, collisionx, collisionNormal) && area == 2) {
-            // If a collision is detected, revert to the original position
-			
-            collisionx = playerOriginal; // Reset player position
-			attackx = attackxOriginal;
-			player.setPosition(prevPos);
-            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
-        }
-
-		if (checkPolygonCollision(fjelbarrier63, collisionx, collisionNormal) && area == 2) {
-            // If a collision is detected, revert to the original position
-			
-            collisionx = playerOriginal; // Reset player position
-			attackx = attackxOriginal;
-			player.setPosition(prevPos);
-            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
-        }
-
-		if (checkPolygonCollision(fjelbarrier64, collisionx, collisionNormal) && area == 2) {
-            // If a collision is detected, revert to the original position
-			
-            collisionx = playerOriginal; // Reset player position
-			attackx = attackxOriginal;
-			player.setPosition(prevPos);
-            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
-        }
-
-		if (checkPolygonCollision(fjelbarrier65, collisionx, collisionNormal) && area == 2) {
-            // If a collision is detected, revert to the original position
-			
-            collisionx = playerOriginal; // Reset player position
-			attackx = attackxOriginal;
-			player.setPosition(prevPos);
-            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
-        }
-
-		if (checkPolygonCollision(fjelbarrier66, collisionx, collisionNormal) && area == 2) {
-            // If a collision is detected, revert to the original position
-			
-            collisionx = playerOriginal; // Reset player position
-			attackx = attackxOriginal;
-			player.setPosition(prevPos);
-            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
-        }
-
-		if (checkPolygonCollision(fjelbarrier67, collisionx, collisionNormal) && area == 2) {
-            // If a collision is detected, revert to the original position
-			
-            collisionx = playerOriginal; // Reset player position
-			attackx = attackxOriginal;
-			player.setPosition(prevPos);
-            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
-        }
-
-		if (checkPolygonCollision(fjelbarrier68, collisionx, collisionNormal) && area == 2) {
-            // If a collision is detected, revert to the original position
-			
-            collisionx = playerOriginal; // Reset player position
-			attackx = attackxOriginal;
-			player.setPosition(prevPos);
-            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
-        }
-
-		if (checkPolygonCollision(fjelbarrier69, collisionx, collisionNormal) && area == 2) {
-            // If a collision is detected, revert to the original position
-			
-            collisionx = playerOriginal; // Reset player position
-			attackx = attackxOriginal;
-			player.setPosition(prevPos);
-            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
-        }
-
-		if (checkPolygonCollision(fjelbarrier70, collisionx, collisionNormal) && area == 2) {
-            // If a collision is detected, revert to the original position
-			
-            collisionx = playerOriginal; // Reset player position
-			attackx = attackxOriginal;
-			player.setPosition(prevPos);
-            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
-        }
-
-		if (checkPolygonCollision(fjelbarrier71, collisionx, collisionNormal) && area == 2) {
-            // If a collision is detected, revert to the original position
-			
-            collisionx = playerOriginal; // Reset player position
-			attackx = attackxOriginal;
-			player.setPosition(prevPos);
-            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
-        }
-
-		if (checkPolygonCollision(fjelbarrier72, collisionx, collisionNormal) && area == 2) {
-            // If a collision is detected, revert to the original position
-			
-            collisionx = playerOriginal; // Reset player position
-			attackx = attackxOriginal;
-			player.setPosition(prevPos);
-            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
-        }
-
-		if (checkPolygonCollision(fjelbarrier73, collisionx, collisionNormal) && area == 2) {
-            // If a collision is detected, revert to the original position
-			
-            collisionx = playerOriginal; // Reset player position
-			attackx = attackxOriginal;
-			player.setPosition(prevPos);
-            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
-        }
-
-		if (checkPolygonCollision(fjelbarrier74, collisionx, collisionNormal) && area == 2) {
-            // If a collision is detected, revert to the original position
-			
-            collisionx = playerOriginal; // Reset player position
-			attackx = attackxOriginal;
-			player.setPosition(prevPos);
-            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
-        }
-
-		if (checkPolygonCollision(fjelbarrier75, collisionx, collisionNormal) && area == 2) {
-            // If a collision is detected, revert to the original position
-			
-            collisionx = playerOriginal; // Reset player position
-			attackx = attackxOriginal;
-			player.setPosition(prevPos);
-            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
-        }
-
-		if (checkPolygonCollision(fjelbarrier76, collisionx, collisionNormal) && area == 2) {
-            // If a collision is detected, revert to the original position
-			
-            collisionx = playerOriginal; // Reset player position
-			attackx = attackxOriginal;
-			player.setPosition(prevPos);
-            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
-        }
-
-		if (checkPolygonCollision(fjelbarrier77, collisionx, collisionNormal) && area == 2) {
-            // If a collision is detected, revert to the original position
-			
-            collisionx = playerOriginal; // Reset player position
-			attackx = attackxOriginal;
-			player.setPosition(prevPos);
-            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
-        }
-
-		if (checkPolygonCollision(fjelbarrier78, collisionx, collisionNormal) && area == 2) {
-            // If a collision is detected, revert to the original position
-			
-            collisionx = playerOriginal; // Reset player position
-			attackx = attackxOriginal;
-			player.setPosition(prevPos);
-            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
-        }
-
-		if (checkPolygonCollision(fjelbarrier79, collisionx, collisionNormal) && area == 2) {
-            // If a collision is detected, revert to the original position
-			
-            collisionx = playerOriginal; // Reset player position
-			attackx = attackxOriginal;
-			player.setPosition(prevPos);
-            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
-        }
-
-		if (checkPolygonCollision(fjelbarrier80, collisionx, collisionNormal) && area == 2) {
-            // If a collision is detected, revert to the original position
-			
-            collisionx = playerOriginal; // Reset player position
-			attackx = attackxOriginal;
-			player.setPosition(prevPos);
-            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
-        }
-
-		if (checkPolygonCollision(fjelbarrier81, collisionx, collisionNormal) && area == 2) {
-            // If a collision is detected, revert to the original position
-			
-            collisionx = playerOriginal; // Reset player position
-			attackx = attackxOriginal;
-			player.setPosition(prevPos);
-            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
-        }
-
-		if (checkPolygonCollision(fjelbarrier82, collisionx, collisionNormal) && area == 2) {
-            // If a collision is detected, revert to the original position
-			
-            collisionx = playerOriginal; // Reset player position
-			attackx = attackxOriginal;
-			player.setPosition(prevPos);
-            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
-        }
-
-		if (checkPolygonCollision(fjelbarrier83, collisionx, collisionNormal) && area == 2) {
+		if (checkPolygonCollision(tree2, collisionx, collisionNormal) && area == 2) {
             // If a collision is detected, revert to the original position
 			
             collisionx = playerOriginal; // Reset player position
@@ -3172,6 +4749,15 @@ int main()
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
+		if (checkPolygonCollision(fjeltavernwall1, collisionx, collisionNormal) && area == 4) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
 
 
 		
@@ -3235,10 +4821,13 @@ int main()
 		//Draw
         sf::View view;
 		view.setCenter(player.getPosition());
+		window.setView(view);
 		
 		// Draw the building polygon
         
-
+		 // Get time elapsed since last frame
+        float deltaTime = clockx.getElapsedTime().asSeconds();
+		
 		// Draw the barrelx polygon
 		sf::ConvexShape barrelxShape;
 		barrelxShape.setPointCount(barrelx.vertices.size());
@@ -3249,35 +4838,64 @@ int main()
 		
 		window.clear();
 		
-		window.setView(view);
-		
+		mousePos = sf::Mouse::getPosition(window);
+
 		if (area == 1){
-        window.draw(background);
+        	window.draw(background);
 
-		window.draw(boundry1Shape);
+			window.draw(boundry1Shape);
 		
+			window.draw(barrel);
 
-		window.draw(barrel);
-
-		window.draw(player);
-		window.draw(fhouse1x);
-		window.draw(overhang);
-		window.draw(boundry4Shape);
+			window.draw(player);
+			window.draw(fhouse1x);
+			window.draw(overhang);
+			window.draw(boundry4Shape);
+			minimap1.draw(window);
 		
-
 		}
 
 		if (area == 2){
-        window.draw(fjelenvar);
-
-		window.draw(player);
+        	window.draw(fjelenvar);
+			fjeltaverndoor.render(window);
+			fjeltaverndoor.update(mousePos, window, playerPos);
+			halfgiantsdoor.render(window);
+			halfgiantsdoor.update(mousePos, window, playerPos);
+			smithdoor.render(window);
+			smithdoor.update(mousePos, window, playerPos);
+			herbalistdoor.render(window);
+			herbalistdoor.update(mousePos, window, playerPos);
+			
+			window.draw(player);
+			window.draw(fjeltree);
+			minimap2.draw(window);
 		}
 
 		if (area == 3){
 			window.draw(wilderness1);
+            window.draw(enemy.getSprite());
+			window.draw(enemy1.getSprite());
 			window.draw(player);
+			minimap3.draw(window);
+			enemy.update(player.getPosition().x, player.getPosition().y, deltaTime);
+			enemy1.update(player.getPosition().x, player.getPosition().y, deltaTime);
+			
 		}
 
+		if (area == 4){
+			window.draw(fjeltaverninn);
+			window.draw(fjelfireplace);
+			window.draw(fjelfirebox);
+			window.draw(player);
+			npc.update(playerPosition, sf::Mouse::getPosition(window));  // Update NPC based on player position and mouse position
+			npc.handleInput(event);  // Handle mouse input for the conversation
+			npc.draw(window);
+		}
+		
+		minimap1.update(sf::Vector2f(playerCenter - mapPosition), sf::Vector2f(window.getSize()));
+		minimap2.update(sf::Vector2f(playerCenter - mapPosition), sf::Vector2f(window.getSize()));
+		minimap3.update(sf::Vector2f(playerCenter - mapPosition), sf::Vector2f(window.getSize()));
+		
 		window.display();
 		
 
