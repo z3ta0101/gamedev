@@ -774,7 +774,7 @@ public:
         : x(startX), y(startY), window(window), customCursorActive(false), isActive(false), selectedOption(-1) {
 
         std::cout << "Loading NPC texture..." << std::endl;
-		
+        
         if (!texture.loadFromFile("/home/z3ta/c++/SoV/images/sprites/dwarfidlespritesheet.png")) {
             std::cerr << "Error loading NPC texture!" << std::endl;
         } else {
@@ -792,21 +792,20 @@ public:
         // Initialize the conversation box at fixed window position
         box.setSize(sf::Vector2f(800, 200));  // Adjust box size if needed
         box.setFillColor(sf::Color(0, 0, 0, 180));  // Semi-transparent black
-        box.setPosition(400.f, 500.f);  // This should always appear at the same position on screen
+        box.setPosition(400.f, 1100.f);  // This should always appear at the same position on screen
 
         npcText.setFont(font);
         npcText.setCharacterSize(20);
         npcText.setFillColor(sf::Color::White);
-        npcText.setPosition(400.f, 500.f);  // Text should appear just above the box
+        npcText.setPosition(410.f, 1110.f);  // Text should appear just above the box
 
-        // Initialize options
+        // Initialize options with the correct size (maxOptions)
+        options.resize(maxOptions);  // Ensure we have maxOptions number of elements
         for (int i = 0; i < maxOptions; ++i) {
-            sf::Text option;
-            option.setFont(font);
-            option.setCharacterSize(18);
-            option.setFillColor(sf::Color::Red);
-            option.setPosition(400.f, 540.f + (i * 30));  // Position options below the text
-            options.push_back(option);
+            options[i].setFont(font);
+            options[i].setCharacterSize(18);
+            options[i].setFillColor(sf::Color::Red);
+            options[i].setPosition(410.f, 1150.f + (i * 30));  // Position options below the text
         }
 
         std::cout << "NPC initialized with conversation box." << std::endl;
@@ -814,7 +813,8 @@ public:
 
     void update(sf::Vector2f playerPos, sf::Vector2i mousePos) {
         sf::Vector2f worldMousePos = window.mapPixelToCoords(mousePos);
-
+		
+		
         // Change cursor if the mouse is over the NPC
         if (sprite.getGlobalBounds().contains(worldMousePos)) {
             if (!customCursorActive) {
@@ -833,48 +833,44 @@ public:
     }
 
     void handleInput(const sf::Event& event) {
-    	std::cout << "Handling Input Event" << std::endl;
+        std::cout << "Handling Input Event" << std::endl;
 
-    	// Only handle the left mouse button press event
-    	if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
-        	box = 1;
-    	}
-
-		if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left) {
-        	std::cout << "Mouse Position: (" << event.mouseButton.x << ", " << event.mouseButton.y << ")" << std::endl;
+        // Only handle the left mouse button press event
+        if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+            std::cout << "Mouse Position: (" << event.mouseButton.x << ", " << event.mouseButton.y << ")" << std::endl;
         
-        	// Get mouse position in screen coordinates
-        	sf::Vector2f mousePos = window.mapPixelToCoords(sf::Vector2i(event.mouseButton.x, event.mouseButton.y));
+            // Get mouse position in screen coordinates
+            sf::Vector2f mousePos = window.mapPixelToCoords(sf::Vector2i(event.mouseButton.x, event.mouseButton.y));
 
-        	// Case 1: Clicked on NPC sprite to start the conversation
-        	if (sprite.getGlobalBounds().contains(mousePos)) {
-            	if (!isActive) {
-                	// Start the conversation and show dialogue box
-                	isActive = true;
-                	setText("Hello, traveler! How can I help you?");
-                	setOptions({"Ask about the quest", "Tell me about yourself", "Goodbye"});
-                	std::cout << "Conversation box activated." << std::endl;
-            	}
-        	}
+            // Case 1: Clicked on NPC sprite to start the conversation
+            if (sprite.getGlobalBounds().contains(mousePos)) {
+                if (!isActive) {
+                    // Start the conversation and show dialogue box
+                    isActive = true;
+                    setText("Hello, traveler! How can I help you?");
+                    setOptions({"Ask about the quest", "Tell me about yourself", "Goodbye"});
+                    std::cout << "Conversation box activated." << std::endl;
+                }
+            }
         
-        	// Case 2: Clicked inside the conversation box (check for option selection)
-        	else if (isActive && box.getGlobalBounds().contains(mousePos)) {
-            	int selectedOption = getSelectedOption();
+            // Case 2: Clicked inside the conversation box (check for option selection)
+            else if (isActive && box.getGlobalBounds().contains(mousePos)) {
+                int selectedOption = getSelectedOption();
             
-            	if (selectedOption == 0) {
-                	setText("You asked about the quest! Here's more information.");
-                	setOptions({"Continue the quest", "Goodbye"});
-            	} else if (selectedOption == 1) {
-                	setText("You asked about me! I'm an NPC with much knowledge.");
-                	setOptions({"Ask about the quest", "Goodbye"});
-            	} else if (selectedOption == 2) {
-                	setText("Goodbye, traveler!");
-                	isActive = false;  // Deactivate conversation box only when "Goodbye" is selected
-                	std::cout << "Conversation box deactivated." << std::endl;
-            	}
-        	}
-    	}
-	}
+                if (selectedOption == 0) {
+                    setText("You asked about the quest! Here's more information.");
+                    setOptions({"Continue the quest", "Goodbye"});
+                } else if (selectedOption == 1) {
+                    setText("You asked about me! I'm an NPC with much knowledge.");
+                    setOptions({"Ask about the quest", "Goodbye"});
+                } else if (selectedOption == 2) {
+                    setText("Goodbye, traveler!");
+                    isActive = false;  // Deactivate conversation box only when "Goodbye" is selected
+                    std::cout << "Conversation box deactivated." << std::endl;
+                }
+            }
+        }
+    }
 
     void draw(sf::RenderWindow& window) {
         window.draw(sprite);  // Always draw NPC sprite
@@ -904,42 +900,58 @@ public:
     }
 
 private:
-    void updateMouseHover(sf::Vector2i mousePosition) {
-        selectedOption = -1;
-        for (size_t i = 0; i < options.size(); ++i) {
-            // Check if mouse position is over the text option area
-            if (options[i].getGlobalBounds().contains(mousePosition.x, mousePosition.y)) {
-                selectedOption = i;
-                std::cout << "Mouse hovering over option " << selectedOption << std::endl;
-                break;
-            }
-        }
-    }
+    void updateMouseHover(sf::Vector2i mousePos) {
+    	selectedOption = -1;
+
+    	// Ensure we're working with window-local coordinates here
+    	// We're using the mouse position as is from the event (screen pixels)
+    	sf::Vector2f windowMousePos(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y));
+
+    	// Print out the window-local mouse position for debugging
+    	std::cout << "Window Mouse Position: (" << windowMousePos.x << ", " << windowMousePos.y << ")" << std::endl;
+
+    	// Iterate through options and check if the mouse is over the option's bounding box
+    	for (size_t i = 0; i < options.size(); ++i) {
+        	// Get the global bounds of the current option (in window coordinates)
+        	sf::FloatRect optionBounds = options[i].getGlobalBounds();
+
+        	// Print out the option's bounding box for debugging
+        	std::cout << "Option " << i << " bounds: "
+                  	<< "Left: " << optionBounds.left
+                  	<< ", Top: " << optionBounds.top
+                  	<< ", Width: " << optionBounds.width
+                  	<< ", Height: " << optionBounds.height << std::endl;
+
+        	// Check if the mouse position is over the text option area (in window-local coordinates)
+        	if (optionBounds.contains(windowMousePos)) {
+            	selectedOption = i;
+            	std::cout << "Mouse hovering over option " << selectedOption << std::endl;
+            	break;  // Stop once we detect the hovered option
+        	}
+    	}
+	}
 
     void drawConversationBox(sf::RenderWindow& window) {
-    	if (isActive) {
-        	// Save the current view (in case you have camera transformations)
-        	sf::View originalView = window.getView();
-        
-        	// Set the view to the default screen space (no transformations)
-        	window.setView(window.getDefaultView());
+        if (isActive) {
+            // Save the current view (in case you have camera transformations)
+            sf::View originalView = window.getView();
+			window.setView(window.getDefaultView());
+            // Now draw UI elements in screen space
+            window.draw(box);  // Draw the conversation box
+            window.draw(npcText);  // Draw NPC dialogue
 
-        	// Now draw UI elements in screen space
-        	window.draw(box);  // Draw the conversation box
-        	window.draw(npcText);  // Draw NPC dialogue
+            // Draw the options
+            for (size_t i = 0; i < options.size(); ++i) {
+                // Set color based on hover state
+                options[i].setFillColor(i == selectedOption ? sf::Color::White : sf::Color::Red);
+                window.draw(options[i]);  // Draw each option
+            }
 
-        	// Draw the options
-        	for (size_t i = 0; i < options.size(); ++i) {
-            	// Set color based on hover state
-            	options[i].setFillColor(i == selectedOption ? sf::Color::White : sf::Color::Red);
-            	window.draw(options[i]);  // Draw each option
-        	}
-
-        	// Restore the original view
-        	window.setView(originalView);
-    	}
-		
-	}
+            // Restore the original view
+            window.setView(originalView);
+			
+        }
+    }
 
     void changeMouseCursor(const std::string& cursorPath) {
         sf::Image cursorImage;
@@ -2671,7 +2683,7 @@ int main()
 	door1txtr.loadFromFile("/home/z3ta/c++/SoV/images/sprites/doorspritesheet1.png");
 	sf::Sprite taverndoor(door1txtr, door1SourceSprite);
 	taverndoor.setPosition(fjeldoor1Position);
-
+	NPC npc(660.f, 2480.f, font, window);
 	bool isPlayerFrozen = false;
 	while (window.isOpen())
 	{
@@ -2680,14 +2692,13 @@ int main()
 		Polygon attackxOriginal = attackx;
 		sf::Vector2f playerPos = player.getPosition();  // Get the player's position
 		sf::Vector2i mousePos = sf::Mouse::getPosition(window);
-		NPC npc(660.f, 2480.f, font, window);
+		
 		while (window.pollEvent(event))
 		{
 			if (event.type == Event::Closed)
 				window.close();
 			
-			
-
+			npc.handleInput(event);
 		}
 
 		if (hasPlayed == false){
@@ -4887,7 +4898,7 @@ int main()
 			window.draw(fjelfireplace);
 			window.draw(fjelfirebox);
 			window.draw(player);
-			npc.update(playerPosition, sf::Mouse::getPosition(window));  // Update NPC based on player position and mouse position
+			npc.update(playerPosition, mousePos);  // Update NPC based on player position and mouse position
 			npc.handleInput(event);  // Handle mouse input for the conversation
 			npc.draw(window);
 		}
