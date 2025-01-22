@@ -935,7 +935,8 @@ private:
         if (isActive) {
             // Save the current view (in case you have camera transformations)
             sf::View originalView = window.getView();
-			window.setView(window.getDefaultView());
+			window.setView(sf::View{sf::FloatRect{{0.f, 0.f}}, sf::Vector2f(window.getSize())}});
+			
             // Now draw UI elements in screen space
             window.draw(box);  // Draw the conversation box
             window.draw(npcText);  // Draw NPC dialogue
