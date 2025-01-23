@@ -812,6 +812,7 @@ public:
     }
 
     void update(sf::Vector2f playerPos, sf::Vector2i mousePos) {
+		sf::Vector2i windowMousePos = sf::Mouse::getPosition(window);
         sf::Vector2f worldMousePos = window.mapPixelToCoords(mousePos);
 		
 		
@@ -828,19 +829,22 @@ public:
 
         // Update mouse hover only if the conversation box is active
         if (isActive) {
-            updateMouseHover(mousePos);
+            updateMouseHover(mousePos, window);
         }
     }
 
-    void handleInput(const sf::Event& event) {
+    void handleInput(const sf::Event& event, sf::Vector2i mousePos, sf::RenderWindow& window) {
         std::cout << "Handling Input Event" << std::endl;
-
+		
         // Only handle the left mouse button press event
         if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
             std::cout << "Mouse Position: (" << event.mouseButton.x << ", " << event.mouseButton.y << ")" << std::endl;
         
             // Get mouse position in screen coordinates
-            sf::Vector2f mousePos = window.mapPixelToCoords(sf::Vector2i(event.mouseButton.x, event.mouseButton.y));
+			sf::Vector2i windowMousePos = sf::Mouse::getPosition(window);
+        	sf::Vector2f mousePos = window.mapPixelToCoords(windowMousePos);
+			std::cout << "Window Mouse Position: (" << windowMousePos.x << ", " << windowMousePos.y << ")" << std::endl;
+			std::cout << "Mapped World Position: (" << mousePos.x << ", " << mousePos.y << ")" << std::endl;
 
             // Case 1: Clicked on NPC sprite to start the conversation
             if (sprite.getGlobalBounds().contains(mousePos)) {
@@ -900,7 +904,7 @@ public:
     }
 
 private:
-    void updateMouseHover(sf::Vector2i mousePos) {
+    void updateMouseHover(sf::Vector2i mousePos, sf::RenderWindow& window) {
     	selectedOption = -1;
 
     	// Ensure we're working with window-local coordinates here
@@ -932,27 +936,41 @@ private:
 	}
 
     void drawConversationBox(sf::RenderWindow& window) {
-        if (isActive) {
-            // Save the current view (in case you have camera transformations)
-            sf::View originalView = window.getView();
-			window.setView(sf::View{sf::FloatRect{{0.f, 0.f}}, sf::Vector2f(window.getSize())}});
+    	if (isActive) {
+        	// Save the current view (in case you have camera transformations)
+        	sf::View originalView = window.getView();
+        
+        	// Set the view to the default screen space (no transformations)
+        	window.setView(window.getDefaultView());
+			sf::View dView = window.getView();
+			dView.setSize(1400.f, 1400.f);
 			
-            // Now draw UI elements in screen space
-            window.draw(box);  // Draw the conversation box
-            window.draw(npcText);  // Draw NPC dialogue
+        	
 
-            // Draw the options
-            for (size_t i = 0; i < options.size(); ++i) {
-                // Set color based on hover state
-                options[i].setFillColor(i == selectedOption ? sf::Color::White : sf::Color::Red);
-                window.draw(options[i]);  // Draw each option
-            }
+        	// Print the properties of DView (default view)
+        	
 
-            // Restore the original view
-            window.setView(originalView);
-			
-        }
-    }
+        	// Now draw UI elements in screen space
+        	window.draw(box);  // Draw the conversation box
+        	window.draw(npcText);  // Draw NPC dialogue
+
+			sf::Vector2i windowMousePos = sf::Mouse::getPosition(window);
+        	sf::Vector2f mousePos = window.mapPixelToCoords(windowMousePos);
+
+        	// Draw the options
+        	for (size_t i = 0; i < options.size(); ++i) {
+            	// Set color based on hover state
+            	options[i].setFillColor(i == selectedOption ? sf::Color::White : sf::Color::Red);
+            	window.draw(options[i]);  // Draw each option
+        	}
+
+        	// Restore the original view
+        	window.setView(originalView);
+			originalView.setSize(1400.f, 1400.f);
+        	// Print the properties of the original view
+        	
+    	}
+	}
 
     void changeMouseCursor(const std::string& cursorPath) {
         sf::Image cursorImage;
@@ -2699,7 +2717,7 @@ int main()
 			if (event.type == Event::Closed)
 				window.close();
 			
-			npc.handleInput(event);
+			npc.handleInput(event, mousePos, window);
 		}
 
 		if (hasPlayed == false){
@@ -4833,6 +4851,7 @@ int main()
 		//Draw
         sf::View view;
 		view.setCenter(player.getPosition());
+		view.setSize(1400, 1400);
 		window.setView(view);
 		
 		// Draw the building polygon
@@ -4900,7 +4919,7 @@ int main()
 			window.draw(fjelfirebox);
 			window.draw(player);
 			npc.update(playerPosition, mousePos);  // Update NPC based on player position and mouse position
-			npc.handleInput(event);  // Handle mouse input for the conversation
+			npc.handleInput(event, mousePos, window);  // Handle mouse input for the conversation
 			npc.draw(window);
 		}
 		
