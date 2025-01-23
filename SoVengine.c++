@@ -513,7 +513,7 @@ private:
     bool isClicked; // To prevent multiple toggles from a single click
 };
 
-bool hasPlayed = false;
+bool hasPlayed = true;
 
 class Button {
 public:
@@ -939,11 +939,14 @@ private:
     	if (isActive) {
         	// Save the current view (in case you have camera transformations)
         	sf::View originalView = window.getView();
-        
+			window.setView(window.getDefaultView());
+			window.setView(sf::View(sf::FloatRect(0.f, 0.f, float(window.getSize().x), float(window.getSize().y))));
+			sf::Vector2i windowMousePos = sf::Mouse::getPosition(window);
+        	sf::Vector2f mousePos = window.mapPixelToCoords(windowMousePos);
         	// Set the view to the default screen space (no transformations)
-        	window.setView(window.getDefaultView());
+        	
 			sf::View dView = window.getView();
-			dView.setSize(1400.f, 1400.f);
+			
 			
         	
 
@@ -954,8 +957,7 @@ private:
         	window.draw(box);  // Draw the conversation box
         	window.draw(npcText);  // Draw NPC dialogue
 
-			sf::Vector2i windowMousePos = sf::Mouse::getPosition(window);
-        	sf::Vector2f mousePos = window.mapPixelToCoords(windowMousePos);
+			
 
         	// Draw the options
         	for (size_t i = 0; i < options.size(); ++i) {
@@ -966,7 +968,9 @@ private:
 
         	// Restore the original view
         	window.setView(originalView);
-			originalView.setSize(1400.f, 1400.f);
+			
+			sf::Vector2u windowSize = window.getSize();
+        	std::cout << "Window Size: " << windowSize.x << "x" << windowSize.y << std::endl;
         	// Print the properties of the original view
         	
     	}
@@ -4850,8 +4854,9 @@ int main()
 
 		//Draw
         sf::View view;
+		
 		view.setCenter(player.getPosition());
-		view.setSize(1400, 1400);
+		
 		window.setView(view);
 		
 		// Draw the building polygon
