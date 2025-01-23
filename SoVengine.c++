@@ -790,14 +790,14 @@ public:
         sprite.setPosition(x, y);
 
         // Initialize the conversation box at fixed window position
-        box.setSize(sf::Vector2f(800, 200));  // Adjust box size if needed
+        box.setSize(sf::Vector2f(1100, 200));  // Adjust box size if needed
         box.setFillColor(sf::Color(0, 0, 0, 180));  // Semi-transparent black
-        box.setPosition(400.f, 1100.f);  // This should always appear at the same position on screen
+        box.setPosition(400.f, 800.f);  // This should always appear at the same position on screen
 
         npcText.setFont(font);
         npcText.setCharacterSize(20);
         npcText.setFillColor(sf::Color::White);
-        npcText.setPosition(410.f, 1110.f);  // Text should appear just above the box
+        npcText.setPosition(410.f, 810.f);  // Text should appear just above the box
 
         // Initialize options with the correct size (maxOptions)
         options.resize(maxOptions);  // Ensure we have maxOptions number of elements
@@ -805,7 +805,7 @@ public:
             options[i].setFont(font);
             options[i].setCharacterSize(18);
             options[i].setFillColor(sf::Color::Red);
-            options[i].setPosition(410.f, 1150.f + (i * 30));  // Position options below the text
+            options[i].setPosition(410.f, 850.f + (i * 30));  // Position options below the text
         }
 
         std::cout << "NPC initialized with conversation box." << std::endl;
@@ -939,25 +939,22 @@ private:
     	if (isActive) {
         	// Save the current view (in case you have camera transformations)
         	sf::View originalView = window.getView();
-			window.setView(window.getDefaultView());
-			window.setView(sf::View(sf::FloatRect(0.f, 0.f, float(window.getSize().x), float(window.getSize().y))));
-			sf::Vector2i windowMousePos = sf::Mouse::getPosition(window);
-        	sf::Vector2f mousePos = window.mapPixelToCoords(windowMousePos);
-        	// Set the view to the default screen space (no transformations)
-        	
-			sf::View dView = window.getView();
-			
-			
-        	
 
-        	// Print the properties of DView (default view)
-        	
+        	// Dynamically update the view to match the window size
+        	sf::View newView(sf::FloatRect(0.f, 0.f, float(window.getSize().x), float(window.getSize().y)));
+        	window.setView(newView);
+
+        	// Get the mouse position in window coordinates
+        	sf::Vector2i windowMousePos = sf::Mouse::getPosition(window);
+        	sf::Vector2f mousePos = window.mapPixelToCoords(windowMousePos);  // Convert to world coordinates
+        
+        	// Print out the window and mouse position for debugging
+        	std::cout << "Window Size: " << window.getSize().x << "x" << window.getSize().y << std::endl;
+        	std::cout << "Mouse Position (world coordinates): (" << mousePos.x << ", " << mousePos.y << ")" << std::endl;
 
         	// Now draw UI elements in screen space
         	window.draw(box);  // Draw the conversation box
         	window.draw(npcText);  // Draw NPC dialogue
-
-			
 
         	// Draw the options
         	for (size_t i = 0; i < options.size(); ++i) {
@@ -968,11 +965,6 @@ private:
 
         	// Restore the original view
         	window.setView(originalView);
-			
-			sf::Vector2u windowSize = window.getSize();
-        	std::cout << "Window Size: " << windowSize.x << "x" << windowSize.y << std::endl;
-        	// Print the properties of the original view
-        	
     	}
 	}
 
