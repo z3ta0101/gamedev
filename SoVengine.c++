@@ -834,47 +834,50 @@ public:
     }
 
     void handleInput(const sf::Event& event, sf::Vector2i mousePos, sf::RenderWindow& window) {
-        std::cout << "Handling Input Event" << std::endl;
-		
-        // Only handle the left mouse button press event
-        if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
-            std::cout << "Mouse Position: (" << event.mouseButton.x << ", " << event.mouseButton.y << ")" << std::endl;
-        
-            // Get mouse position in screen coordinates
-			sf::Vector2i windowMousePos = sf::Mouse::getPosition(window);
-        	sf::Vector2f mousePos = window.mapPixelToCoords(windowMousePos);
-			std::cout << "Window Mouse Position: (" << windowMousePos.x << ", " << windowMousePos.y << ")" << std::endl;
-			std::cout << "Mapped World Position: (" << mousePos.x << ", " << mousePos.y << ")" << std::endl;
+    	// Handle mouse button press
+    	if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
 
-            // Case 1: Clicked on NPC sprite to start the conversation
-            if (sprite.getGlobalBounds().contains(mousePos)) {
-                if (!isActive) {
-                    // Start the conversation and show dialogue box
-                    isActive = true;
-                    setText("Hello, traveler! How can I help you?");
-                    setOptions({"Ask about the quest", "Tell me about yourself", "Goodbye"});
-                    std::cout << "Conversation box activated." << std::endl;
-                }
-            }
-        
-            // Case 2: Clicked inside the conversation box (check for option selection)
-            else if (isActive && box.getGlobalBounds().contains(mousePos)) {
-                int selectedOption = getSelectedOption();
-            
-                if (selectedOption == 0) {
-                    setText("You asked about the quest! Here's more information.");
-                    setOptions({"Continue the quest", "Goodbye"});
-                } else if (selectedOption == 1) {
-                    setText("You asked about me! I'm an NPC with much knowledge.");
-                    setOptions({"Ask about the quest", "Goodbye"});
-                } else if (selectedOption == 2) {
-                    setText("Goodbye, traveler!");
-                    isActive = false;  // Deactivate conversation box only when "Goodbye" is selected
-                    std::cout << "Conversation box deactivated." << std::endl;
-                }
-            }
-        }
-    }
+        	// Get mouse position in window coordinates
+        	sf::Vector2i windowMousePos = sf::Mouse::getPosition(window);
+        	sf::Vector2f mousePos = window.mapPixelToCoords(windowMousePos);
+
+        	// Check if the player clicked on the NPC sprite to start the conversation
+        	if (sprite.getGlobalBounds().contains(mousePos)) {
+            	if (!isActive) {
+                	// Start the conversation and display the first set of options
+                	isActive = true;
+                	setText("Hello, traveler! How can I help you?");
+                	setOptions({"Ask about the quest", "Tell me about yourself", "Goodbye"});
+                	std::cout << "Conversation box activated.\n";
+            	}
+        	} 
+        	// Check if the player clicked inside the conversation box
+        	else if (isActive && box.getGlobalBounds().contains(static_cast<float>(windowMousePos.x), static_cast<float>(windowMousePos.y))) {
+            	// Get the selected option based on the hover logic
+            	int clickedOption = getSelectedOption();
+
+            	// Only proceed if an option was actually clicked
+            	if (clickedOption == -1) return;
+
+            	std::cout << "Option clicked: " << clickedOption << "\n";
+
+            	// Based on the selected option, update the dialogue text and options
+            	if (clickedOption == 0) {
+                	setText("You asked about the quest! Here's more information.");
+                	setOptions({"Continue the quest", "Goodbye"});
+            	} 
+            	else if (clickedOption == 1) {
+                	setText("You asked about me! I'm an NPC with much knowledge.");
+                	setOptions({"Ask about the quest", "Goodbye"});
+            	} 
+            	else if (clickedOption == 2) {
+                	setText("Goodbye, traveler!");
+                	isActive = false; // End the conversation when 'Goodbye' is selected
+                	std::cout << "Conversation ended.\n";
+            	}
+        	}
+    	}
+	}
 
     void draw(sf::RenderWindow& window) {
         window.draw(sprite);  // Always draw NPC sprite
@@ -905,32 +908,19 @@ public:
 
 private:
     void updateMouseHover(sf::Vector2i mousePos, sf::RenderWindow& window) {
-    	selectedOption = -1;
+    	selectedOption = -1;  // Reset the selected option
 
-    	// Ensure we're working with window-local coordinates here
-    	// We're using the mouse position as is from the event (screen pixels)
+    	// Convert the mouse position to world coordinates
     	sf::Vector2f windowMousePos(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y));
+    	std::cout << "Mouse Hover Position: (" << windowMousePos.x << ", " << windowMousePos.y << ")\n";
 
-    	// Print out the window-local mouse position for debugging
-    	std::cout << "Window Mouse Position: (" << windowMousePos.x << ", " << windowMousePos.y << ")" << std::endl;
-
-    	// Iterate through options and check if the mouse is over the option's bounding box
+    	// Check each option's bounding box to see if the mouse is over it
     	for (size_t i = 0; i < options.size(); ++i) {
-        	// Get the global bounds of the current option (in window coordinates)
         	sf::FloatRect optionBounds = options[i].getGlobalBounds();
-
-        	// Print out the option's bounding box for debugging
-        	std::cout << "Option " << i << " bounds: "
-                  	<< "Left: " << optionBounds.left
-                  	<< ", Top: " << optionBounds.top
-                  	<< ", Width: " << optionBounds.width
-                  	<< ", Height: " << optionBounds.height << std::endl;
-
-        	// Check if the mouse position is over the text option area (in window-local coordinates)
         	if (optionBounds.contains(windowMousePos)) {
             	selectedOption = i;
-            	std::cout << "Mouse hovering over option " << selectedOption << std::endl;
-            	break;  // Stop once we detect the hovered option
+            	std::cout << "Mouse hovering over option " << selectedOption << "\n";
+            	break; // Stop once we find the hovered option
         	}
     	}
 	}
@@ -946,7 +936,7 @@ private:
 
         	// Get the mouse position in window coordinates
         	sf::Vector2i windowMousePos = sf::Mouse::getPosition(window);
-        	sf::Vector2f mousePos = window.mapPixelToCoords(windowMousePos);  // Convert to world coordinates
+        	sf::Vector2f mousePos = window.mapPixelToCoords(windowMousePos);
         
         	// Print out the window and mouse position for debugging
         	std::cout << "Window Size: " << window.getSize().x << "x" << window.getSize().y << std::endl;
@@ -4848,7 +4838,7 @@ int main()
         sf::View view;
 		
 		view.setCenter(player.getPosition());
-		
+		view.setSize(1700, 1700);
 		window.setView(view);
 		
 		// Draw the building polygon
