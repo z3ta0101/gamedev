@@ -15,6 +15,8 @@
 #include <random>
 #include <functional>
 #include <memory>
+#include <fstream>
+#include <sstream>
 #include </home/z3ta/c++/SoV/main/vectorx2f.h>
 
 using namespace sf;
@@ -52,6 +54,9 @@ int playerArmor = 17;
 
 #include </home/z3ta/c++/SoV/main/polygon.h>
 
+#include </home/z3ta/c++/SoV/main/inv.h>
+
+
 int main()
 {
 	// Load font for button text
@@ -61,7 +66,7 @@ int main()
         return -1;
     }
     Enemy enemy(50, 50, playerHealth, playerArmor);
-    Enemy enemy1(500, 500, playerHealth, playerArmor);
+    Enemy enemy1(5000, 5000, playerHealth, playerArmor);
 	
 	
 	Minimap minimap1("/home/z3ta/c++/SoV/images/backgrounds/town1xmm.jpg", 0.1f, sf::Vector2f(100.f, 100.f)); // Example values
@@ -137,6 +142,53 @@ int main()
     sf::Texture backgroundtxtr;
     backgroundtxtr.loadFromFile("/home/z3ta/c++/SoV/images/backgrounds/town1x.jpg");
     
+	Inventory inventory(10);
+
+    sf::Texture daggerTexture;
+    if (!daggerTexture.loadFromFile("/home/z3ta/c++/SoV/images/ui/daggericon.png")) {
+        std::cerr << "Error loading item icon!" << std::endl;
+        return -1;
+    }
+
+    // Initialize items correctly
+    for (int i = 0; i < 1; ++i) {
+        Item dagger = {
+            "dagger " + std::to_string(i + 1),  // Name
+            i + 1,  // ID
+            1,  // Quantity
+            daggerTexture,  // Icon
+            ItemType::Weapon,  // Type
+            1,  // Value
+            10,  // Durability
+            {"", 0},  // Effect
+            false,  // Stackable
+            {0, ""},  // UseLimitations
+            "A simple dagger"  // Description
+        };
+        inventory.addItem(dagger);
+        
+    }
+
+    sf::Texture inventoryBackgroundTexture;
+    if (!inventoryBackgroundTexture.loadFromFile("/home/z3ta/c++/SoV/images/ui/invpanel.png")) {
+        std::cerr << "Error loading inventory background!" << std::endl;
+        return -1;
+    }
+
+    sf::Texture emptySlotTexture;
+    if (!emptySlotTexture.loadFromFile("/home/z3ta/c++/SoV/images/ui/invslot.png")) {
+        std::cerr << "Error loading empty slot texture!" << std::endl;
+        return -1;
+    }
+
+    sf::Texture groundSlotTexture;
+    if (!groundSlotTexture.loadFromFile("/home/z3ta/c++/SoV/images/ui/invslot.png")) {
+        std::cerr << "Error loading ground slot texture!" << std::endl;
+        return -1;
+    }
+
+    InventoryUI inventoryUI(&inventory, inventoryBackgroundTexture, emptySlotTexture, {700, 275}, 2, 5, groundSlotTexture);
+
     sf::Sprite background;
     background.setTexture(backgroundtxtr);
     background.setPosition(0, -4200);
@@ -198,7 +250,7 @@ int main()
 	wilderness1.setTexture(wilderness1txtr);
 	wilderness1.setPosition(0, -4200);
 
-	sf::Vector2f minimapPosition(playerCenter.x, playerCenter.y);
+	sf::Vector2f minimapPosition(1100, 1100);
 	sf::Vector2f xPosition(1500, 1500);
 	sf::Vector2f xAdjust(104, 140);
 	//Object Coordinates
@@ -313,6 +365,23 @@ int main()
 				window.close();
 			
 			npc.handleInput(event, mousePos, window);
+
+			// Toggle the visibility of the inventory with the "I" key
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::I) {
+                inventoryUI.isVisible = !inventoryUI.isVisible;
+            }
+
+            if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+                for (size_t i = 0; i < inventoryUI.itemSlots.size(); ++i) {
+                    if (inventoryUI.itemSlots[i].getGlobalBounds().contains(static_cast<sf::Vector2f>(sf::Mouse::getPosition(window)))) {
+                        inventoryUI.startDragging(i); // Start dragging the item
+                    }
+                }
+            }
+
+            if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left) {
+                inventoryUI.stopDragging(static_cast<sf::Vector2f>(sf::Mouse::getPosition(window))); // Stop dragging and drop the item
+            }
 		}
 
 		if (hasPlayed == false){
@@ -499,7 +568,7 @@ int main()
 		minimap1.update(sf::Vector2f(playerCenter - mapPosition), sf::Vector2f(window.getSize()));
 		minimap2.update(sf::Vector2f(playerCenter - mapPosition), sf::Vector2f(window.getSize()));
 		minimap3.update(sf::Vector2f(playerCenter - mapPosition), sf::Vector2f(window.getSize()));
-		
+		inventoryUI.draw(window);
 		window.display();
 		
 
