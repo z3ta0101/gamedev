@@ -78,6 +78,36 @@ int main()
 	Door4 herbalistdoor(sf::Vector2f(9664, 967), "/home/z3ta/c++/SoV/images/sprites/herbalistdoorspritesheet.png");
 	std::string textureFile = "/home/z3ta/c++/SoV/images/sprites/buttons/button1.png";
 
+    sf::Texture inventoryBackgroundTexture;
+    if (!inventoryBackgroundTexture.loadFromFile("/home/z3ta/c++/SoV/images/ui/invpanel.png")) {
+        std::cerr << "Error loading inventory background!" << std::endl;
+        return -1;
+    }
+
+    sf::Texture emptySlotTexture;
+    if (!emptySlotTexture.loadFromFile("/home/z3ta/c++/SoV/images/ui/invslot.png")) {
+        std::cerr << "Error loading empty slot texture!" << std::endl;
+        return -1;
+    }
+
+    sf::Texture groundSlotTexture;
+    if (!groundSlotTexture.loadFromFile("/home/z3ta/c++/SoV/images/ui/invslot.png")) {
+        std::cerr << "Error loading ground slot texture!" << std::endl;
+        return -1;
+    }
+
+    sf::Texture hpotionTexture;
+    if (!hpotionTexture.loadFromFile("/home/z3ta/c++/SoV/images/ui/healthpotion.png")) {
+        std::cerr << "Error loading item icon!" << std::endl;
+        return -1;
+    }
+
+    sf::Texture daggerTexture;
+    if (!daggerTexture.loadFromFile("/home/z3ta/c++/SoV/images/ui/daggericon.png")) {
+        std::cerr << "Error loading item icon!" << std::endl;
+        return -1;
+    }
+
 	int playerAttackRoll = generateRandomNumber();
 
 	#include </home/z3ta/c++/SoV/main/vertices.h>
@@ -143,12 +173,12 @@ int main()
     backgroundtxtr.loadFromFile("/home/z3ta/c++/SoV/images/backgrounds/town1x.jpg");
     
 	Inventory inventory(10);
+    Item hpotion("Potion of Healing", 1, 5, hpotionTexture, ItemType::Consumable, 10, 100, Effect(), true, UseLimitations(), "Heals a small amount of HP");
+    inventory.addItem(hpotion);
 
-    sf::Texture daggerTexture;
-    if (!daggerTexture.loadFromFile("/home/z3ta/c++/SoV/images/ui/daggericon.png")) {
-        std::cerr << "Error loading item icon!" << std::endl;
-        return -1;
-    }
+    // Create InventoryUI
+    InventoryUI inventoryUI(&inventory, inventoryBackgroundTexture, emptySlotTexture, sf::Vector2f(50, 50), 4, 4, groundSlotTexture);
+    inventoryUI.isVisible = false;
 
     // Initialize items correctly
     for (int i = 0; i < 1; ++i) {
@@ -167,12 +197,6 @@ int main()
         };
         inventory.addItem(dagger);
         
-    }
-
-    sf::Texture hpotionTexture;
-    if (!hpotionTexture.loadFromFile("/home/z3ta/c++/SoV/images/ui/healthpotion.png")) {
-        std::cerr << "Error loading item icon!" << std::endl;
-        return -1;
     }
 
     // Initialize items correctly
@@ -196,26 +220,6 @@ int main()
         inventory.addItem(hpotion);
         
     }
-
-    sf::Texture inventoryBackgroundTexture;
-    if (!inventoryBackgroundTexture.loadFromFile("/home/z3ta/c++/SoV/images/ui/invpanel.png")) {
-        std::cerr << "Error loading inventory background!" << std::endl;
-        return -1;
-    }
-
-    sf::Texture emptySlotTexture;
-    if (!emptySlotTexture.loadFromFile("/home/z3ta/c++/SoV/images/ui/invslot.png")) {
-        std::cerr << "Error loading empty slot texture!" << std::endl;
-        return -1;
-    }
-
-    sf::Texture groundSlotTexture;
-    if (!groundSlotTexture.loadFromFile("/home/z3ta/c++/SoV/images/ui/invslot.png")) {
-        std::cerr << "Error loading ground slot texture!" << std::endl;
-        return -1;
-    }
-
-    InventoryUI inventoryUI(&inventory, inventoryBackgroundTexture, emptySlotTexture, {700, 275}, 2, 5, groundSlotTexture);
 
     sf::Sprite background;
     background.setTexture(backgroundtxtr);
