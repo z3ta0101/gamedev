@@ -169,6 +169,34 @@ int main()
         
     }
 
+    sf::Texture hpotionTexture;
+    if (!hpotionTexture.loadFromFile("/home/z3ta/c++/SoV/images/ui/healthpotion.png")) {
+        std::cerr << "Error loading item icon!" << std::endl;
+        return -1;
+    }
+
+    // Initialize items correctly
+    for (int i = 0; i < 1; ++i) {
+        Item hpotion = {
+            "Potion of Healing " + std::to_string(i + 1),  // Name
+            i + 2,  // ID
+            1,  // Quantity
+            hpotionTexture,  // Icon
+            ItemType::Consumable,  // Type
+            10,  // Value
+            10,  // Durability
+            {"Restores 1d8 HP", 8},  // Effect
+            true,  // Stackable
+            {0, ""},  // UseLimitations
+            "A simple potion of healing. Restores a small amount of health."  // Description
+        };
+        inventory.addItem(hpotion);
+        inventory.addItem(hpotion);
+        inventory.addItem(hpotion);
+        inventory.addItem(hpotion);
+        
+    }
+
     sf::Texture inventoryBackgroundTexture;
     if (!inventoryBackgroundTexture.loadFromFile("/home/z3ta/c++/SoV/images/ui/invpanel.png")) {
         std::cerr << "Error loading inventory background!" << std::endl;
