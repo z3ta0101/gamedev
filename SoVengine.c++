@@ -172,54 +172,36 @@ int main()
     sf::Texture backgroundtxtr;
     backgroundtxtr.loadFromFile("/home/z3ta/c++/SoV/images/backgrounds/town1x.jpg");
     
-	Inventory inventory(10);
-    Item hpotion("Potion of Healing", 1, 5, hpotionTexture, ItemType::Consumable, 10, 100, Effect(), true, UseLimitations(), "Heals a small amount of HP");
-    inventory.addItem(hpotion);
+	// Create an Inventory object
+    Inventory inventory(10);
 
-    // Create InventoryUI
+    // Create Item instances with icon file paths (not textures)
+    std::vector<Item> items = {
+        Item("Potion of Healing", 2, 1, "/home/z3ta/c++/SoV/images/ui/hpotion.png", ItemType::Consumable, 10, 100, Effect(), true, UseLimitations(), "Potion of Healing"),
+        Item("Dagger", 1, 1, "/home/z3ta/c++/SoV/images/ui/daggericon.png", ItemType::Weapon, 10, 100, Effect(), false, UseLimitations(), "A simple dagger")
+    };
+
+    // Add items to the inventory
+    for (const auto& item : items) {
+        inventory.addItem(item);
+    }
+
+    // Create InventoryUI with relevant textures for the background and empty slots
     InventoryUI inventoryUI(&inventory, inventoryBackgroundTexture, emptySlotTexture, sf::Vector2f(50, 50), 4, 4, groundSlotTexture);
     inventoryUI.isVisible = false;
 
-    // Initialize items correctly
-    for (int i = 0; i < 1; ++i) {
-        Item dagger = {
-            "dagger " + std::to_string(i + 1),  // Name
-            i + 1,  // ID
-            1,  // Quantity
-            daggerTexture,  // Icon
-            ItemType::Weapon,  // Type
-            1,  // Value
-            10,  // Durability
-            {"", 0},  // Effect
-            false,  // Stackable
-            {0, ""},  // UseLimitations
-            "A simple dagger"  // Description
-        };
+    // Add more items dynamically
+    for (int i = 0; i < 5; ++i) {
+        Item dagger("dagger " + std::to_string(i + 1), i + 1, 1, "/home/z3ta/c++/SoV/images/ui/daggericon.png", ItemType::Weapon, 1, 100, Effect(), false, UseLimitations(), "A simple dagger");
         inventory.addItem(dagger);
-        
     }
 
-    // Initialize items correctly
-    for (int i = 0; i < 1; ++i) {
-        Item hpotion = {
-            "Potion of Healing " + std::to_string(i + 1),  // Name
-            i + 2,  // ID
-            1,  // Quantity
-            hpotionTexture,  // Icon
-            ItemType::Consumable,  // Type
-            10,  // Value
-            10,  // Durability
-            {"Restores 1d8 HP", 8},  // Effect
-            true,  // Stackable
-            {0, ""},  // UseLimitations
-            "A simple potion of healing. Restores a small amount of health."  // Description
-        };
+    for (int i = 0; i < 5; ++i) {
+        Item hpotion("hpotion " + std::to_string(i + 1), i + 1, 1, "/home/z3ta/c++/SoV/images/ui/hpotion.png", ItemType::Consumable, 10, 100, Effect(), true, UseLimitations(), "Potion of Cure Light Wounds");
         inventory.addItem(hpotion);
-        inventory.addItem(hpotion);
-        inventory.addItem(hpotion);
-        inventory.addItem(hpotion);
-        
     }
+
+    
 
     sf::Sprite background;
     background.setTexture(backgroundtxtr);
