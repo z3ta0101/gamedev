@@ -176,7 +176,12 @@ public:
     }
 };
 
-// The UI for displaying and interacting with the inventory
+// Member variables:
+sf::Clock clickTimer;  // Move clock outside draw(), so it persists across frames.
+bool buttonWasPressed = false;  // Tracks if the mouse was pressed in the previous frame
+bool clickDetected = false;     // Tracks if a full click (press and release) was detected
+const float clickThreshold = 0.2f;  // Time in seconds to consider a click (e.g., 200 ms)
+
 class InventoryUI {
 public:
     sf::Sprite background;
@@ -193,7 +198,7 @@ public:
 
     InventoryUI(Inventory* inventory, const sf::Texture& backgroundTexture, const sf::Texture& emptySlotTexture, const sf::Vector2f& position, int rows, int cols, const sf::Texture& groundSlotTexture)
         : inventory(inventory), emptySlotTexture(emptySlotTexture) {
-
+        
         background.setTexture(backgroundTexture);
         background.setPosition(position);
         background.setScale(2.f, 2.f);
@@ -228,7 +233,6 @@ public:
         }
     }
 
-
     void startDragging(int index) {
         if (index >= 0 && index < inventory->items.size()) {
             draggedItemIndex = index;
@@ -238,6 +242,8 @@ public:
             const std::string& iconPath = inventory->items[index].iconPath;
             draggedItemSprite.setTexture(IconManager::getIcon(iconPath));  // Load texture dynamically
 
+            // Set the texture of the slot to the empty slot texture
+            itemSlots[index].setTexture(&emptySlotTexture);  // Set the slot texture to empty slot while dragging
         }
     }
 
@@ -248,7 +254,7 @@ public:
 
         // Try placing on a ground slot
         for (auto& groundSlot : groundSlots) {
-            if (groundSlot.contains(mousePos)) {
+            if (groundSlot.area.getGlobalBounds().contains(mousePos)) {
                 if (groundSlot.item == nullptr) {
                     groundSlot.placeItem(&inventory->items[draggedItemIndex]);
                     inventory->removeItem(inventory->items[draggedItemIndex].id);
@@ -263,24 +269,36 @@ public:
             for (size_t i = 0; i < itemSlots.size(); ++i) {
                 if (itemSlots[i].getGlobalBounds().contains(mousePos)) {
                     Item* draggedItem = &inventory->items[draggedItemIndex];
-                    if (i >= inventory->items.size()) {
-                        inventory->items.push_back(*draggedItem);
-                        inventory->removeItem(draggedItem->id);
-                    } else {
-                        std::swap(inventory->items[draggedItemIndex], inventory->items[i]);
+
+                    // Check if the clicked inventory slot is empty or already contains the dragged item
+                    if (inventory->items.size() <= i || inventory->items[i].id != draggedItem->id) {
+                        // If slot is empty, add the item back into the inventory at the clicked slot
+                        if (i >= inventory->items.size()) {
+                            inventory->items.push_back(*draggedItem);
+                            inventory->removeItem(draggedItem->id);
+                        } 
+                        // Swap item in inventory if needed
+                        else {
+                            std::swap(inventory->items[draggedItemIndex], inventory->items[i]);
+                        }
+                        itemPlaced = true;
+                        break;
                     }
-                    itemPlaced = true;
-                    break;
                 }
             }
         }
 
-        
+        // Reset slot texture to the item's texture
+        if (draggedItemIndex >= 0 && draggedItemIndex < inventory->items.size()) {
+            itemSlots[draggedItemIndex].setTexture(&IconManager::getIcon(inventory->items[draggedItemIndex].iconPath));
+        }
 
+        // Reset dragging state
         isDragging = false;
         draggedItemIndex = -1;
     }
 
+    // Updated draw method
     void draw(sf::RenderWindow& window) {
         if (!isVisible) return;
 
@@ -293,45 +311,105 @@ public:
 
         window.draw(background);
 
-        // Draw Item Slots and Tooltips
+        // Draw Item Slots and Tooltips (Inventory)
         for (size_t i = 0; i < itemSlots.size(); ++i) {
-            sf::Sprite itemSprite;
+            sf::Sprite slotSprite;
+
+            // If the slot contains an item
             if (i < inventory->items.size()) {
-                // Use IconManager to get the texture for the item icon
-                itemSprite.setTexture(IconManager::getIcon(inventory->items[i].iconPath));
-                itemSprite.setPosition(itemSlots[i].getPosition());
+                if (i == draggedItemIndex && isDragging) {
+                    // If this is the slot from which the item is being dragged, set it to empty
+                    slotSprite.setTexture(emptySlotTexture);
+                } else {
+                    // Otherwise, set the item texture using IconManager
+                    const sf::Texture& itemTexture = IconManager::getIcon(inventory->items[i].iconPath);
+                    slotSprite.setTexture(itemTexture);
+                }
+            } else {
+                // Empty slot, set texture to emptySlotTexture
+                slotSprite.setTexture(emptySlotTexture);
+            }
 
-                if (itemSprite.getGlobalBounds().contains(mousePos)) {
-                    if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
-                        startDragging(i);
+            // Set the position for the slot and draw it
+            slotSprite.setPosition(itemSlots[i].getPosition());
+            window.draw(slotSprite);
+
+            // Handle mouse press detection for drag-and-drop
+            if (slotSprite.getGlobalBounds().contains(mousePos)) {
+                if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !buttonWasPressed) {
+                    buttonWasPressed = true;
+                    clickDetected = false;
+                    clickTimer.restart();
+                }
+
+                if (!sf::Mouse::isButtonPressed(sf::Mouse::Left) && buttonWasPressed) {
+                    if (clickDetected) {
+                        startDragging(i);  // Start dragging only after full click
                     }
+                    buttonWasPressed = false;  // Reset after release
+                }
 
-                    // Display Tooltip
+                // Click detection (check if click is within threshold)
+                if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && clickTimer.getElapsedTime().asSeconds() < clickThreshold && !clickDetected) {
+                    clickDetected = true;
+                }
+
+                // Display Tooltip
+                if (i < inventory->items.size()) {
                     tooltipText.setString(inventory->items[i].description);
                     tooltipText.setPosition(mousePos);
                     window.draw(tooltipText);
                 }
+            }
 
+            // Draw item sprite if slot contains an item and it's not the dragged item
+            if (i < inventory->items.size() && i != draggedItemIndex) {
+                const sf::Texture& itemTexture = IconManager::getIcon(inventory->items[i].iconPath);
+                sf::Sprite itemSprite(itemTexture);
+                itemSprite.setPosition(itemSlots[i].getPosition());
                 window.draw(itemSprite);
-            } else {
-                sf::Sprite slotSprite;
-                slotSprite.setTexture(emptySlotTexture);
-                slotSprite.setPosition(itemSlots[i].getPosition());
-                window.draw(slotSprite);
             }
         }
 
-        // Draw ground slots
+        // Draw Ground Slots (Handling drag-and-drop to ground slots)
         for (auto& groundSlot : groundSlots) {
+            // Draw the ground slot and any item inside it
             groundSlot.draw(window);
+
+            if (groundSlot.area.getGlobalBounds().contains(mousePos)) {  // <-- Fix applied here
+                if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !buttonWasPressed) {
+                    buttonWasPressed = true;
+                    clickDetected = false;
+                    clickTimer.restart();
+                }
+
+                if (!sf::Mouse::isButtonPressed(sf::Mouse::Left) && buttonWasPressed) {
+                    // Try placing an item from inventory to this ground slot
+                    if (draggedItemIndex >= 0 && draggedItemIndex < inventory->items.size()) {
+                        Item* draggedItem = &inventory->items[draggedItemIndex];
+                        if (groundSlot.item == nullptr) {
+                            groundSlot.placeItem(draggedItem);  // Place item into ground slot
+                            inventory->removeItem(draggedItem->id);  // Remove item from inventory
+                            isDragging = false;
+                        }
+                    }
+                    buttonWasPressed = false;  // Reset after release
+                }
+
+                // Click detection (check if click is within threshold)
+                if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && clickTimer.getElapsedTime().asSeconds() < clickThreshold && !clickDetected) {
+                    clickDetected = true;
+                }
+            }
         }
 
-        // Draw Dragging Item
+        // Draw Dragging Item (while dragging an item from inventory)
         if (isDragging) {
             draggedItemSprite.setPosition(sf::Mouse::getPosition(window).x - 32, sf::Mouse::getPosition(window).y - 32);
             window.draw(draggedItemSprite);
         }
 
+        // Restore original view
         window.setView(originalView);
     }
 };
