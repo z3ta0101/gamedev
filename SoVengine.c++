@@ -30,7 +30,7 @@ int area = 3;
 
 #include </home/z3ta/c++/SoV/main/doors.h>
 
-bool hasPlayed = false;
+bool hasPlayed = true;
 
 #include </home/z3ta/c++/SoV/main/intromovie.h>
 
@@ -177,31 +177,25 @@ int main()
 
     // Create Item instances with icon file paths (not textures)
     std::vector<Item> items = {
-        Item("Potion of Healing", 2, 1, "/home/z3ta/c++/SoV/images/ui/hpotion.png", ItemType::Consumable, 10, 100, Effect(), true, UseLimitations(), "Potion of Healing"),
+        Item("Potion of Healing", 1, 1, "/home/z3ta/c++/SoV/images/ui/hpotion.png", ItemType::Consumable, 10, 100, Effect(), true, UseLimitations(), "Potion of Healing"),
         Item("Dagger", 1, 1, "/home/z3ta/c++/SoV/images/ui/daggericon.png", ItemType::Weapon, 10, 100, Effect(), false, UseLimitations(), "A simple dagger")
     };
-
-    // Add items to the inventory
-    for (const auto& item : items) {
-        inventory.addItem(item);
-    }
 
     // Create InventoryUI with relevant textures for the background and empty slots
     InventoryUI inventoryUI(&inventory, inventoryBackgroundTexture, emptySlotTexture, sf::Vector2f(50, 50), 4, 4, groundSlotTexture);
     inventoryUI.isVisible = false;
 
     // Add more items dynamically
-    for (int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 1; ++i) {
         Item dagger("dagger " + std::to_string(i + 1), i + 1, 1, "/home/z3ta/c++/SoV/images/ui/daggericon.png", ItemType::Weapon, 1, 100, Effect(), false, UseLimitations(), "A simple dagger");
         inventory.addItem(dagger);
     }
 
-    for (int i = 0; i < 5; ++i) {
-        Item hpotion("hpotion " + std::to_string(i + 1), i + 1, 1, "/home/z3ta/c++/SoV/images/ui/hpotion.png", ItemType::Consumable, 10, 100, Effect(), true, UseLimitations(), "Potion of Cure Light Wounds");
+    for (int i = 0; i < 1; ++i) {
+        Item hpotion("hpotion " + std::to_string(i + 1), i + 2, 1, "/home/z3ta/c++/SoV/images/ui/healthpotion.png", ItemType::Consumable, 10, 100, Effect(), false, UseLimitations(), "Potion of Cure Light Wounds");
         inventory.addItem(hpotion);
+		inventory.addItem(hpotion);
     }
-
-    
 
     sf::Sprite background;
     background.setTexture(backgroundtxtr);
@@ -385,17 +379,7 @@ int main()
                 inventoryUI.isVisible = !inventoryUI.isVisible;
             }
 
-            if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
-                for (size_t i = 0; i < inventoryUI.itemSlots.size(); ++i) {
-                    if (inventoryUI.itemSlots[i].getGlobalBounds().contains(static_cast<sf::Vector2f>(sf::Mouse::getPosition(window)))) {
-                        inventoryUI.startDragging(i); // Start dragging the item
-                    }
-                }
-            }
-
-            if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left) {
-                inventoryUI.stopDragging(static_cast<sf::Vector2f>(sf::Mouse::getPosition(window))); // Stop dragging and drop the item
-            }
+            
 		}
 
 		if (hasPlayed == false){
