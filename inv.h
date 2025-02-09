@@ -395,14 +395,22 @@ public:
                     buttonWasPressed = true;
                     clickDetected = false;
                     clickTimer.restart();
+                }
 
+                if (!sf::Mouse::isButtonPressed(sf::Mouse::Left) && buttonWasPressed) {
                     if (isDragging && draggedItem) {
                         if (groundSlot.item == nullptr) {
-                            groundSlot.removeItem();
-                            groundSlot.placeItem(draggedItem);
-                            inventory->removeItem(draggedItem->id);
+                            groundSlot.removeItem();  // Clear existing item from the slot (if any)
+                            groundSlot.placeItem(draggedItem);  // Place dragged item in ground slot
+        
+                            // Set the texture of the dragged item sprite using the IconManager
+                            groundSlot.itemSprite.setTexture(IconManager::getIcon(draggedItem->iconPath));
+        
+                            // Remove the item from the inventory (assuming removeItem is properly defined)
+                            inventory->removeItem(draggedItem->id); 
+        
+                            // Reset the dragging state
                             draggedItemIndex = -1;
-                            
                             isDragging = false;
                         } else {
                             Item* tempItem = groundSlot.item;
@@ -422,9 +430,6 @@ public:
                             groundSlot.removeItem();
                         }
                     }
-                }
-
-                if (!sf::Mouse::isButtonPressed(sf::Mouse::Left) && buttonWasPressed) {
                     buttonWasPressed = false;
                 }
 
