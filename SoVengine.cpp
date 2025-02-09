@@ -61,7 +61,7 @@ int main()
 {
 	// Load font for button text
     sf::Font font;
-    if (!font.loadFromFile(ASSETS_DIR "/texgyrechorus-mediumitalic.otf")) {
+    if (!font.loadFromFile("/usr/share/texmf/fonts/opentype/public/tex-gyre/texgyrechorus-mediumitalic.otf")) {
         std::cerr << "Error loading font!" << std::endl;
         return -1;
     }
@@ -69,43 +69,43 @@ int main()
     Enemy enemy1(5000, 5000, playerHealth, playerArmor);
 	
 	
-	Minimap minimap1(ASSETS_DIR "images/backgrounds/town1xmm.jpg", 0.1f, sf::Vector2f(100.f, 100.f)); // Example values
-	Minimap minimap2(ASSETS_DIR "images/backgrounds/town2mm.jpg", 0.1f, sf::Vector2f(100.f, 100.f)); // Example values
-	Minimap minimap3(ASSETS_DIR "images/backgrounds/wilderness1mm.jpg", 0.1f, sf::Vector2f(100.f, 100.f)); // Example values
-	Door fjeltaverndoor(sf::Vector2f(900, -3472), ASSETS_DIR "images/sprites/doorspritesheet1.png");
-	Door2 halfgiantsdoor(sf::Vector2f(249, 1733), ASSETS_DIR "images/sprites/hgdoorspritesheet.png");
-	Door3 smithdoor(sf::Vector2f(7835, -3364), ASSETS_DIR "images/sprites/smithdoor.png");
-	Door4 herbalistdoor(sf::Vector2f(9664, 967), ASSETS_DIR "images/sprites/herbalistdoorspritesheet.png");
-	std::string textureFile = ASSETS_DIR "images/sprites/buttons/button1.png";
+	Minimap minimap1("/home/z3ta/c++/SoV/images/backgrounds/town1xmm.jpg", 0.1f, sf::Vector2f(100.f, 100.f)); // Example values
+	Minimap minimap2("/home/z3ta/c++/SoV/images/backgrounds/town2mm.jpg", 0.1f, sf::Vector2f(100.f, 100.f)); // Example values
+	Minimap minimap3("/home/z3ta/c++/SoV/images/backgrounds/wilderness1mm.jpg", 0.1f, sf::Vector2f(100.f, 100.f)); // Example values
+	Door fjeltaverndoor(sf::Vector2f(900, -3472), "/home/z3ta/c++/SoV/images/sprites/doorspritesheet1.png");
+	Door2 halfgiantsdoor(sf::Vector2f(249, 1733), "/home/z3ta/c++/SoV/images/sprites/hgdoorspritesheet.png");
+	Door3 smithdoor(sf::Vector2f(7835, -3364), "/home/z3ta/c++/SoV/images/sprites/smithdoor.png");
+	Door4 herbalistdoor(sf::Vector2f(9664, 967), "/home/z3ta/c++/SoV/images/sprites/herbalistdoorspritesheet.png");
+	std::string textureFile = "/home/z3ta/c++/SoV/images/sprites/buttons/button1.png";
 
     sf::Texture inventoryBackgroundTexture;
-    if (!inventoryBackgroundTexture.loadFromFile(ASSETS_DIR "images/ui/invpanel.png")) {
+    if (!inventoryBackgroundTexture.loadFromFile("/home/z3ta/c++/SoV/images/ui/invpanel.png")) {
         std::cerr << "Error loading inventory background!" << std::endl;
-        //return -1;
+        return -1;
     }
 
     sf::Texture emptySlotTexture;
-    if (!emptySlotTexture.loadFromFile(ASSETS_DIR "images/ui/invslot.png")) {
+    if (!emptySlotTexture.loadFromFile("/home/z3ta/c++/SoV/images/ui/invslot.png")) {
         std::cerr << "Error loading empty slot texture!" << std::endl;
-        //return -1;
+        return -1;
     }
 
     sf::Texture groundSlotTexture;
-    if (!groundSlotTexture.loadFromFile(ASSETS_DIR "images/ui/invslot.png")) {
+    if (!groundSlotTexture.loadFromFile("/home/z3ta/c++/SoV/images/ui/invslot.png")) {
         std::cerr << "Error loading ground slot texture!" << std::endl;
-        //return -1;
+        return -1;
     }
 
     sf::Texture hpotionTexture;
-    if (!hpotionTexture.loadFromFile(ASSETS_DIR "images/ui/healthpotion.png")) {
+    if (!hpotionTexture.loadFromFile("/home/z3ta/c++/SoV/images/ui/healthpotion.png")) {
         std::cerr << "Error loading item icon!" << std::endl;
-        //return -1;
+        return -1;
     }
 
     sf::Texture daggerTexture;
-    if (!daggerTexture.loadFromFile(ASSETS_DIR "images/ui/daggericon.png")) {
+    if (!daggerTexture.loadFromFile("/home/z3ta/c++/SoV/images/ui/daggericon.png")) {
         std::cerr << "Error loading item icon!" << std::endl;
-        //return -1;
+        return -1;
     }
 
 	int playerAttackRoll = generateRandomNumber();
@@ -170,15 +170,15 @@ int main()
 	
     //Felstrond backdrop
     sf::Texture backgroundtxtr;
-    backgroundtxtr.loadFromFile("./images/backgrounds/town1x.jpg");
+    backgroundtxtr.loadFromFile("/home/z3ta/c++/SoV/images/backgrounds/town1x.jpg");
     
 	// Create an Inventory object
     Inventory inventory(10);
 
     // Create Item instances with icon file paths (not textures)
     std::vector<Item> items = {
-        Item("Potion of Healing", 1, 1, "./images/ui/hpotion.png", ItemType::Consumable, 10, 100, Effect(), true, UseLimitations(), "Potion of Healing"),
-        Item("Dagger", 1, 1, "./images/ui/daggericon.png", ItemType::Weapon, 10, 100, Effect(), false, UseLimitations(), "A simple dagger")
+        Item("Potion of Healing", 1, 1, "/home/z3ta/c++/SoV/images/ui/hpotion.png", ItemType::Consumable, 10, 100, Effect(), true, UseLimitations(), "Potion of Healing"),
+        Item("Dagger", 1, 1, "/home/z3ta/c++/SoV/images/ui/daggericon.png", ItemType::Weapon, 10, 100, Effect(), false, UseLimitations(), "A simple dagger")
     };
 
     // Create InventoryUI with relevant textures for the background and empty slots
@@ -187,12 +187,12 @@ int main()
 
     // Add more items dynamically
     for (int i = 0; i < 1; ++i) {
-        Item dagger("dagger " + std::to_string(i + 1), i + 1, 1, "./images/ui/daggericon.png", ItemType::Weapon, 1, 100, Effect(), false, UseLimitations(), "A simple dagger");
+        Item dagger("dagger " + std::to_string(i + 1), i + 1, 1, "/home/z3ta/c++/SoV/images/ui/daggericon.png", ItemType::Weapon, 1, 100, Effect(), false, UseLimitations(), "Dagger");
         inventory.addItem(dagger);
     }
 
     for (int i = 0; i < 1; ++i) {
-        Item hpotion("hpotion " + std::to_string(i + 1), i + 2, 1, "./images/ui/healthpotion.png", ItemType::Consumable, 10, 100, Effect(), false, UseLimitations(), "Potion of Cure Light Wounds");
+        Item hpotion("hpotion " + std::to_string(i + 1), i + 2, 1, "/home/z3ta/c++/SoV/images/ui/healthpotion.png", ItemType::Consumable, 10, 100, Effect(), true, UseLimitations(), "Potion of Cure Light Wounds");
         inventory.addItem(hpotion);
 		inventory.addItem(hpotion);
     }
@@ -203,7 +203,7 @@ int main()
 
 	//Felstrond cave
 	sf::Texture cavetxtr;
-	cavetxtr.loadFromFile("./images/layers/fcaveoverlayer.png");
+	cavetxtr.loadFromFile("/home/z3ta/c++/SoV/images/layers/fcaveoverlayer.png");
 
 	sf::Sprite overhang;
 	overhang.setTexture(cavetxtr);
@@ -211,7 +211,7 @@ int main()
 
 	//fjelenvår backdrop
     sf::Texture fjelenvartxtr;
-    fjelenvartxtr.loadFromFile("./images/backgrounds/town2.jpg");
+    fjelenvartxtr.loadFromFile("/home/z3ta/c++/SoV/images/backgrounds/town2.jpg");
     
     sf::Sprite fjelenvar;
     fjelenvar.setTexture(fjelenvartxtr);
@@ -219,7 +219,7 @@ int main()
 
 	//fjeltaverninn
 	sf::Texture fjeltaverntxtr;
-	fjeltaverntxtr.loadFromFile("./images/backgrounds/fjeltaverninn.png");
+	fjeltaverntxtr.loadFromFile("/home/z3ta/c++/SoV/images/backgrounds/fjeltaverninn.png");
 	sf::Sprite fjeltaverninn;
 	fjeltaverninn.setTexture(fjeltaverntxtr);
 	fjeltaverninn.setPosition(2700, 1700);
@@ -228,7 +228,7 @@ int main()
 	//fjeltavernfireplace
 	sf::IntRect fjelhearthSourceSprite(0, 0, 414, 155);
 	sf::Texture fjelfireplacetxtr;
-	fjelfireplacetxtr.loadFromFile("./images/sprites/fireplacespritesheet.png");
+	fjelfireplacetxtr.loadFromFile("/home/z3ta/c++/SoV/images/sprites/fireplacespritesheet.png");
 	sf::Sprite fjelfireplace;
 	fjelfireplace.setTexture(fjelfireplacetxtr);
 	fjelfireplace.setPosition(2940, 2400);
@@ -236,7 +236,7 @@ int main()
 
 	//fjelhearthfirebox
 	sf::Texture fjelfireboxtxtr;
-	fjelfireboxtxtr.loadFromFile("./images/sprites/fireplacefirebox.png");
+	fjelfireboxtxtr.loadFromFile("/home/z3ta/c++/SoV/images/sprites/fireplacefirebox.png");
 	sf::Sprite fjelfirebox;
 	fjelfirebox.setTexture(fjelfireboxtxtr);
 	fjelfirebox.setPosition(2940, 2400);
@@ -244,7 +244,7 @@ int main()
 	
 	//fhouse1
 	sf::Texture fhouse1txtr;
-	fhouse1txtr.loadFromFile("./images/layers/fhouse1top.png");
+	fhouse1txtr.loadFromFile("/home/z3ta/c++/SoV/images/layers/fhouse1top.png");
 
 	sf::Sprite fhouse1x;
 	fhouse1x.setTexture(fhouse1txtr);
@@ -252,7 +252,7 @@ int main()
 
 	//wilderness1 backdrop
 	sf::Texture wilderness1txtr;
-	wilderness1txtr.loadFromFile("./images/backgrounds/wilderness1.jpg");
+	wilderness1txtr.loadFromFile("/home/z3ta/c++/SoV/images/backgrounds/wilderness1.jpg");
 
 	sf::Sprite wilderness1;
 	wilderness1.setTexture(wilderness1txtr);
@@ -276,7 +276,7 @@ int main()
 	//Player
 	sf::IntRect rectSourceSprite(0, 0, 127, 127);
     sf::Texture playertxtr;
-    playertxtr.loadFromFile("./images/sprites/playerspritesheet.png");
+    playertxtr.loadFromFile("/home/z3ta/c++/SoV/images/sprites/playerspritesheet.png");
 	player.setTexture(playertxtr);
 	player.setPosition(playerPosition);
 	
@@ -287,7 +287,7 @@ int main()
 	
 	sf::Vector2f mapPosition(500, -200);
 	sf::Texture collisionxtxtr;
-	collisionxtxtr.loadFromFile("./images/sprites/playerspritesheet.png");
+	collisionxtxtr.loadFromFile("/home/z3ta/c++/SoV/images/sprites/playerspritesheet.png");
 	
     sf::Clock clock;
 	sf::Clock clockx;
@@ -303,7 +303,7 @@ int main()
 	
 	//Barrels
 	sf::Texture barreltxtr;
-	barreltxtr.loadFromFile("./images/sprites/barreldestructsequence1.png");
+	barreltxtr.loadFromFile("/home/z3ta/c++/SoV/images/sprites/barreldestructsequence1.png");
 	sf::IntRect barrelxSourceSprite(0, 0, 100, 100);
 	sf::Sprite barrel(barreltxtr, barrelxSourceSprite);
 	barrel.setPosition(barrelPosition);
@@ -311,50 +311,50 @@ int main()
 
 
 	sf::Texture barreltoptxtr;
-	barreltoptxtr.loadFromFile("./images/sprites/barrel1top.png");
+	barreltoptxtr.loadFromFile("/home/z3ta/c++/SoV/images/sprites/barrel1top.png");
 	sf::Sprite barreltop(barreltoptxtr);
 	barreltop.setPosition(barreltopPosition);
 
 	//Buildings
 	sf::Texture taverntxtr;
-	taverntxtr.loadFromFile("./images/sprites/longhousetavernsprite.png");
+	taverntxtr.loadFromFile("/home/z3ta/c++/SoV/images/sprites/longhousetavernsprite.png");
 	sf::Sprite tavern(taverntxtr);
 	tavern.setPosition(tavernPosition);
 
 	//TavernTop
 	sf::Texture taverntoptxtr;
-	taverntoptxtr.loadFromFile("./images/buildings/taverntop.png");
+	taverntoptxtr.loadFromFile("/home/z3ta/c++/SoV/images/buildings/taverntop.png");
 	sf::Sprite taverntop(taverntoptxtr);
 	taverntop.setPosition(tavernTopPosition);
 
 	//whousetop
 	sf::Texture whousetoptxtr;
-	whousetoptxtr.loadFromFile("./images/buildings/whousetop.png");
+	whousetoptxtr.loadFromFile("/home/z3ta/c++/SoV/images/buildings/whousetop.png");
 	sf::Sprite whousetop(whousetoptxtr);
 	whousetop.setPosition(whouseTopPosition);
 
 	//wtowertop
 	sf::Texture wtowertoptxtr;
-	wtowertoptxtr.loadFromFile("./images/buildings/wtowertop.png");
+	wtowertoptxtr.loadFromFile("/home/z3ta/c++/SoV/images/buildings/wtowertop.png");
 	sf::Sprite wtowertop(wtowertoptxtr);
 	wtowertop.setPosition(wtowerTopPosition);
 
 	//bhousetop
 	sf::Texture bhousetoptxtr;
-	bhousetoptxtr.loadFromFile("./images/buildings/bhousetop.png");
+	bhousetoptxtr.loadFromFile("/home/z3ta/c++/SoV/images/buildings/bhousetop.png");
 	sf::Sprite bhousetop(bhousetoptxtr);
 	bhousetop.setPosition(bhouseTopPosition);
 
 	//fjeltree
 	sf::Texture fjeltreetxtr;
-	fjeltreetxtr.loadFromFile("./images/sprites/fjeltreex.png");
+	fjeltreetxtr.loadFromFile("/home/z3ta/c++/SoV/images/sprites/fjeltreex.png");
 	sf::Sprite fjeltree(fjeltreetxtr);
 	fjeltree.setPosition(fjeltreePosition);
 
 	//fjeltaverndoor
 	sf::IntRect door1SourceSprite(0, 0, 338, 281);
 	sf::Texture door1txtr;
-	door1txtr.loadFromFile("./images/sprites/doorspritesheet1.png");
+	door1txtr.loadFromFile("/home/z3ta/c++/SoV/images/sprites/doorspritesheet1.png");
 	sf::Sprite taverndoor(door1txtr, door1SourceSprite);
 	taverndoor.setPosition(fjeldoor1Position);
 	NPC npc(660.f, 2480.f, font, window);
@@ -386,7 +386,7 @@ int main()
 			playIntroMovie(window);
 		}
         
-		#include "./animations.h"
+		#include </home/z3ta/c++/SoV/main/animations.h>
 
 		//Vectors
 		playerCenter = Vector2f(player.getPosition());
@@ -442,7 +442,7 @@ int main()
 		// Set the collision position to the adjusted position
 		collisionx.setPosition(adjustedPosition);
 		
-		#include "./collision.h"
+		#include </home/z3ta/c++/SoV/main/collision.h>
 		
 		// Draw the player polygon
         sf::ConvexShape playerShape;
