@@ -12,7 +12,7 @@ public:
 
         std::cout << "Loading NPC texture..." << std::endl;
         
-        if (!texture.loadFromFile("/home/z3ta/c++/SoV/images/sprites/dwarfidlespritesheet.png")) {
+        if (!texture.loadFromFile(ASSETS_DIR "images/sprites/dwarfidlespritesheet.png")) {
             std::cerr << "Error loading NPC texture!" << std::endl;
         } else {
             std::cout << "NPC texture loaded successfully." << std::endl;
@@ -56,7 +56,7 @@ public:
         // Change cursor if the mouse is over the NPC
         if (sprite.getGlobalBounds().contains(worldMousePos)) {
             if (!customCursorActive) {
-                changeMouseCursor("/home/z3ta/c++/SoV/images/sprites/mouse/mousesocial.png");
+                changeMouseCursor(ASSETS_DIR "images/sprites/mouse/mousesocial.png");
                 customCursorActive = true;
             }
         } else if (customCursorActive) {

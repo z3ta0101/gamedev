@@ -81,19 +81,19 @@ int main()
     sf::Texture inventoryBackgroundTexture;
     if (!inventoryBackgroundTexture.loadFromFile(ASSETS_DIR "images/ui/invpanel.png")) {
         std::cerr << "Error loading inventory background!" << std::endl;
-        //return -1;
+        return -1;
     }
 
     sf::Texture emptySlotTexture;
     if (!emptySlotTexture.loadFromFile(ASSETS_DIR "images/ui/invslot.png")) {
         std::cerr << "Error loading empty slot texture!" << std::endl;
-        //return -1;
+        return -1;
     }
 
     sf::Texture groundSlotTexture;
     if (!groundSlotTexture.loadFromFile(ASSETS_DIR "images/ui/invslot.png")) {
         std::cerr << "Error loading ground slot texture!" << std::endl;
-        //return -1;
+        return -1;
     }
 
     sf::Texture hpotionTexture;

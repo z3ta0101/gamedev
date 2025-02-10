@@ -10,7 +10,7 @@ public:
     Button(float x, float y, float width, float height, const std::string& text, sf::Font& font, const std::string& texturePath, std::function<void()> onClick) 
         : onClick(onClick) {
         // Set up button size and position
-        button.setSize(sf::Vector2f(width, height));
+        button.setSize(sf::Vector2f(width, height)); 
         button.setPosition(x, y);
 
         // Load texture and apply it to the button
@@ -77,13 +77,13 @@ void playIntroMovie(sf::RenderWindow& window) {
 
     // Load the background texture and font
     sf::Texture backgroundTexture;
-    if (!backgroundTexture.loadFromFile("/home/z3ta/c++/SoV/images/castle1.png")) {
+    if (!backgroundTexture.loadFromFile(ASSETS_DIR "images/castle1.png")) {
         std::cerr << "Error loading background texture" << std::endl;
         return;
     }
 
     sf::Font font;
-    if (!font.loadFromFile("/usr/share/texmf/fonts/opentype/public/tex-gyre/texgyrechorus-mediumitalic.otf")) {
+    if (!font.loadFromFile(ASSETS_DIR "texgyrechorus-mediumitalic.otf")) {
         std::cerr << "Error loading font" << std::endl;
         return;
     }
@@ -101,7 +101,7 @@ void playIntroMovie(sf::RenderWindow& window) {
         window.getSize().x * 0.8f - 75,  // Center the button horizontally
         window.getSize().y * 0.8f,        // Place the button lower on the screen
         150, 75,                          // Button size
-        "Continue", font, "/home/z3ta/c++/SoV/images/sprites/buttons/button1.png", 
+        "Continue", font, ASSETS_DIR "/images/sprites/buttons/button1.png", 
         [&]() {
             hasPlayed = true; // Mark that the intro has been skipped
         }
@@ -109,7 +109,7 @@ void playIntroMovie(sf::RenderWindow& window) {
 
     // Load and play audio
     sf::SoundBuffer buffer;
-    if (!buffer.loadFromFile("/home/z3ta/c++/SoV/audio/introtracks/intro1.ogg")) {
+    if (!buffer.loadFromFile(ASSETS_DIR "/audio/introtracks/intro1.ogg")) {
         std::cerr << "Error loading audio file" << std::endl;
         return;
     }

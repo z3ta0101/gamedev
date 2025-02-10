@@ -24,7 +24,7 @@ add_executable(main SoVengine.cpp)
 target_compile_features(main PRIVATE cxx_std_17)
 target_link_libraries(main PRIVATE sfml-graphics sfml-audio tinyxml2)
 
-target_compile_definitions(main PRIVATE ASSETS_DIR="${PROJECT_SOURCE_DIR}")
+target_compile_definitions(main PRIVATE ASSETS_DIR="${PROJECT_SOURCE_DIR}/")
 
 if(WIN32)
     add_custom_command(

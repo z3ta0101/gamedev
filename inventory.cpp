@@ -275,10 +275,10 @@ int main() {
     // Create SFML window and load textures
     sf::RenderWindow window(sf::VideoMode(800, 600), "Inventory System");
     sf::Texture emptySlotTexture, backgroundTexture, itemTexture, groundSlotTexture;
-    emptySlotTexture.loadFromFile("/home/z3ta/c++/SoV/images/ui/invslot.png");
-    backgroundTexture.loadFromFile("/home/z3ta/c++/SoV/images/ui/invpanel.png");
-    itemTexture.loadFromFile("/home/z3ta/c++/SoV/images/ui/healthpotion.png");
-    groundSlotTexture.loadFromFile("/home/z3ta/c++/SoV/images/ui/invslot.png");
+    emptySlotTexture.loadFromFile(ASSETS_DIR "images/ui/invslot.png");
+    backgroundTexture.loadFromFile(ASSETS_DIR "images/ui/invpanel.png");
+    itemTexture.loadFromFile(ASSETS_DIR "images/ui/healthpotion.png");
+    groundSlotTexture.loadFromFile(ASSETS_DIR "images/ui/invslot.png");
 
     // Create an inventory and populate it
     Inventory inventory(10);
