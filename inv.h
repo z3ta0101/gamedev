@@ -257,7 +257,7 @@ public:
         background.setPosition(position);
         background.setScale(2.f, 2.f);
 
-        font.loadFromFile("/usr/share/texmf/fonts/opentype/public/tex-gyre/texgyrechorus-mediumitalic.otf");
+        font.loadFromFile(ASSETS_DIR "texgyrechorus-mediumitalic.otf");
         tooltipText.setFont(font);
         tooltipText.setCharacterSize(14);
         tooltipText.setFillColor(sf::Color::White);
