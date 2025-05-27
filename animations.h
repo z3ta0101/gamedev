@@ -195,101 +195,115 @@
 		
 		if (clock.getElapsedTime().asSeconds() > 0.1 && direction == 1 && idle == 0)
 		{
-			rectSourceSprite.height = 127;
-			rectSourceSprite.top = 2032;
+			rectSourceSprite.height = 156;
+			rectSourceSprite.width = 156;
+			rectSourceSprite.top = 0;
 			isMoving = true;
-			if (rectSourceSprite.left >= 700)
+			if (rectSourceSprite.left >= 1404)
 			    rectSourceSprite.left = 0;
 			else
-			    rectSourceSprite.left += 127;
+			    rectSourceSprite.left += 156;
 			player.setTextureRect(rectSourceSprite);
 			clock.restart();
 		}
         if (clock.getElapsedTime().asSeconds() > 0.1f && direction == 2 && idle == 0)
         {
-			rectSourceSprite.height = 127;
-			rectSourceSprite.top = 2159;
+			rectSourceSprite.height = 156;
+			rectSourceSprite.width = 156;
+			rectSourceSprite.top = 156;
+			clothesSourceSprite.height = 156;
+			clothesSourceSprite.width = 156;
+			clothesSourceSprite.top = 156;
 			isMoving = true;
-            if (rectSourceSprite.left >= 700)
-                rectSourceSprite.left = 0;
-            else
-                rectSourceSprite.left += 127;
-            
-            player.setTextureRect(rectSourceSprite);
-            clock.restart();
+			if (rectSourceSprite.left >= 1404)
+			    rectSourceSprite.left = 0;
+			else
+			    rectSourceSprite.left += 156;
+			if (clothesSourceSprite.left >= 2340)
+				clothesSourceSprite.left = 0;
+			else
+				clothesSourceSprite.left += 156;
+			
+			player.setTextureRect(rectSourceSprite);
+			playerclothes.setTextureRect(clothesSourceSprite);
+			clock.restart();
         }
 		if (clock.getElapsedTime().asSeconds() > 0.1 && direction == 3 && idle == 0)
 		{
-			rectSourceSprite.height = 127;
-			rectSourceSprite.top = 2286;
+			rectSourceSprite.height = 156;
+			rectSourceSprite.width = 156;
+			rectSourceSprite.top = 312;
 			isMoving = true;
-            if (rectSourceSprite.left >= 700)
+			if (rectSourceSprite.left >= 1404)
 			    rectSourceSprite.left = 0;
-			else 
-			    rectSourceSprite.left += 127;
-		
-		    player.setTextureRect(rectSourceSprite);
+			else
+			    rectSourceSprite.left += 156;
+			player.setTextureRect(rectSourceSprite);
 			clock.restart();
 		}
 		if (clock.getElapsedTime().asSeconds() > 0.1f && direction == 4 && idle == 0)
 		{
-			rectSourceSprite.height = 127;
-			rectSourceSprite.top = 2413;
+			rectSourceSprite.height = 156;
+			rectSourceSprite.width = 156;
+			rectSourceSprite.top = 468;
 			isMoving = true;
-			if (rectSourceSprite.left >= 700)
+			if (rectSourceSprite.left >= 1404)
 			    rectSourceSprite.left = 0;
 			else
-			    rectSourceSprite.left += 127;
-			
+			    rectSourceSprite.left += 156;
 			player.setTextureRect(rectSourceSprite);
 			clock.restart();
 		}
 		
 		if (clock.getElapsedTime().asSeconds() > 0.1 && direction == 5 && idle == 0)
 		{
-			rectSourceSprite.height = 127;
-			rectSourceSprite.top = 2540;
+			rectSourceSprite.height = 156;
+			rectSourceSprite.width = 156;
+			rectSourceSprite.top = 624;
 			isMoving = true;
-			if (rectSourceSprite.left >= 700)
+			if (rectSourceSprite.left >= 1404)
 			    rectSourceSprite.left = 0;
 			else
-			    rectSourceSprite.left += 127;
+			    rectSourceSprite.left += 156;
 			player.setTextureRect(rectSourceSprite);
 			clock.restart();
 		}
 		if (clock.getElapsedTime().asSeconds() > 0.1 && direction == 6 && idle == 0)
 		{
-			rectSourceSprite.height = 127;
-			rectSourceSprite.top = 2667;
+			rectSourceSprite.height = 156;
+			rectSourceSprite.width = 156;
+			rectSourceSprite.top = 780;
 			isMoving = true;
-			if (rectSourceSprite.left >= 700)
+			if (rectSourceSprite.left >= 1404)
 			    rectSourceSprite.left = 0;
 			else
-			    rectSourceSprite.left += 127;
+			    rectSourceSprite.left += 156;
 			player.setTextureRect(rectSourceSprite);
 			clock.restart();
 		}
 		if (clock.getElapsedTime().asSeconds() > 0.1 && direction == 7 && idle == 0)
 		{
-			rectSourceSprite.height = 127;
-			rectSourceSprite.top = 2794;
+			rectSourceSprite.height = 156;
+			rectSourceSprite.width = 156;
+			rectSourceSprite.top = 936;
 			isMoving = true;
-			if (rectSourceSprite.left >= 700)
+			if (rectSourceSprite.left >= 1404)
 			    rectSourceSprite.left = 0;
 			else
-			    rectSourceSprite.left += 127;
+			    rectSourceSprite.left += 156;
 			player.setTextureRect(rectSourceSprite);
 			clock.restart();
 		}
 		if (clock.getElapsedTime().asSeconds() > 0.1 && direction == 8 && idle == 0)
 		{
-			rectSourceSprite.height = 127;
-			rectSourceSprite.top = 2921;
+			rectSourceSprite.height = 156;
+			rectSourceSprite.width = 156;
+			rectSourceSprite.top = 1092;
 			isMoving = true;
-			if (rectSourceSprite.left >= 700)
+			if (rectSourceSprite.left >= 1404)
 			    rectSourceSprite.left = 0;
 			else
-			    rectSourceSprite.left += 127;
+			    rectSourceSprite.left += 156;
 			player.setTextureRect(rectSourceSprite);
 			clock.restart();
 		}
@@ -324,105 +338,113 @@
 			}
 
 		if (idle == 1 && direction == 1 && isMoving == false && playerHealth > 0){
-			rectSourceSprite.height = 127;
-			rectSourceSprite.top = 1016;
+			rectSourceSprite.height = 156;
+			rectSourceSprite.width = 156;
+			rectSourceSprite.top = 2496;
 			rectSourceSprite.left = 0;
 			isMoving = false;
-			if (rectSourceSprite.left >= 700)
+			if (rectSourceSprite.left >= 156)
 			    rectSourceSprite.left = 0;
 			else
-			    rectSourceSprite.left += 127;
+			    rectSourceSprite.left += 0;
 			player.setTextureRect(rectSourceSprite);
 			clock.restart();
 		}
 
 		if (idle == 1 && direction == 2 && isMoving == false && playerHealth > 0){
-			rectSourceSprite.height = 127;
-			rectSourceSprite.top = 1143;
+			rectSourceSprite.height = 156;
+			rectSourceSprite.width = 156;
+			rectSourceSprite.top = 2652;
 			rectSourceSprite.left = 0;
 			isMoving = false;
-			if (rectSourceSprite.left >= 700)
+			if (rectSourceSprite.left >= 156)
 			    rectSourceSprite.left = 0;
 			else
-			    rectSourceSprite.left += 127;
+			    rectSourceSprite.left += 0;
 			player.setTextureRect(rectSourceSprite);
 			clock.restart();
 		}
 
 		if (idle == 1 && direction == 3 && isMoving == false && playerHealth > 0){
-			rectSourceSprite.height = 127;
-			rectSourceSprite.top = 1270;
+			rectSourceSprite.height = 156;
+			rectSourceSprite.width = 156;
+			rectSourceSprite.top = 2808;
 			rectSourceSprite.left = 0;
 			isMoving = false;
-			if (rectSourceSprite.left >= 700)
+			if (rectSourceSprite.left >= 156)
 			    rectSourceSprite.left = 0;
 			else
-			    rectSourceSprite.left += 127;
+			    rectSourceSprite.left += 0;
 			player.setTextureRect(rectSourceSprite);
 			clock.restart();
 		}
 
 		if (idle == 1 && direction == 4 && isMoving == false && playerHealth > 0){
-			rectSourceSprite.height = 127;
-			rectSourceSprite.top = 1397;
+			rectSourceSprite.height = 156;
+			rectSourceSprite.width = 156;
+			rectSourceSprite.top = 2964;
 			rectSourceSprite.left = 0;
 			isMoving = false;
-			if (rectSourceSprite.left >= 700)
+			if (rectSourceSprite.left >= 156)
 			    rectSourceSprite.left = 0;
 			else
-			    rectSourceSprite.left += 127;
+			    rectSourceSprite.left += 0;
 			player.setTextureRect(rectSourceSprite);
 			clock.restart();
 		}
 
 		if (idle == 1 && direction == 5 && isMoving == false && playerHealth > 0){
-			rectSourceSprite.height = 127;
-			rectSourceSprite.top = 1524;
+			rectSourceSprite.height = 156;
+			rectSourceSprite.width = 156;
+			rectSourceSprite.top = 3120;
 			rectSourceSprite.left = 0;
 			isMoving = false;
-			if (rectSourceSprite.left >= 700)
+			if (rectSourceSprite.left >= 156)
 			    rectSourceSprite.left = 0;
 			else
-			    rectSourceSprite.left += 127;
+			    rectSourceSprite.left += 0;
 			player.setTextureRect(rectSourceSprite);
 			clock.restart();
 		}
 
 		if (idle == 1 && direction == 6 && isMoving == false && playerHealth > 0){
-			rectSourceSprite.height = 127;
-			rectSourceSprite.top = 1651;
+			rectSourceSprite.height = 156;
+			rectSourceSprite.width = 156;
+			rectSourceSprite.top = 3276;
 			rectSourceSprite.left = 0;
 			isMoving = false;
-			if (rectSourceSprite.left >= 700)
+			if (rectSourceSprite.left >= 156)
 			    rectSourceSprite.left = 0;
 			else
-			    rectSourceSprite.left += 127;
+			    rectSourceSprite.left += 0;
 			player.setTextureRect(rectSourceSprite);
 			clock.restart();
 		}
 
 		if (idle == 1 && direction == 7 && isMoving == false && playerHealth > 0){
-			rectSourceSprite.height = 127;
-			rectSourceSprite.top = 1778;
+			rectSourceSprite.height = 156;
+			rectSourceSprite.width = 156;
+			rectSourceSprite.top = 3432;
 			rectSourceSprite.left = 0;
 			isMoving = false;
-			if (rectSourceSprite.left >= 700)
+			if (rectSourceSprite.left >= 156)
 			    rectSourceSprite.left = 0;
 			else
-			    rectSourceSprite.left += 127;
+			    rectSourceSprite.left += 0;
 			player.setTextureRect(rectSourceSprite);
 			clock.restart();
 		}
 
 		if (idle == 1 && direction == 8 && isMoving == false && playerHealth > 0){
-			rectSourceSprite.height = 127;
-			rectSourceSprite.top = 1905;
+			rectSourceSprite.height = 156;
+			rectSourceSprite.width = 156;
+			rectSourceSprite.top = 3588;
 			rectSourceSprite.left = 0;
 			isMoving = false;
-			if (rectSourceSprite.left >= 700)
+			if (rectSourceSprite.left >= 156)
 			    rectSourceSprite.left = 0;
 			else
-			    rectSourceSprite.left += 127;
+			    rectSourceSprite.left += 0;
 			player.setTextureRect(rectSourceSprite);
 			clock.restart();
 		}
@@ -437,16 +459,17 @@
 			std::cout << "PositionY: " << playerCenter.y << std::endl;
 			if (direction == 1)
 			{
-				rectSourceSprite.height = 127;
-			    rectSourceSprite.top = 0;
-			    if (rectSourceSprite.left >= 700){
+				rectSourceSprite.height = 156;
+				rectSourceSprite.width = 156;
+			    rectSourceSprite.top = 1248;
+			    if (rectSourceSprite.left >= 2184){
 					
 			        rectSourceSprite.left = 0;
 					round = true;
 					
 				}
 			    else
-			        rectSourceSprite.left += 127;
+			        rectSourceSprite.left += 156;
 
 				if (rectSourceSprite.left == 0 && round == true){
 					attacking = true;
@@ -468,15 +491,16 @@
 			}
 			if (direction == 2)
 			{
-				rectSourceSprite.height = 127;
-			    rectSourceSprite.top = 127;
-			    if (rectSourceSprite.left >= 700){
+				rectSourceSprite.height = 156;
+				rectSourceSprite.width = 156;
+			    rectSourceSprite.top = 1404;
+			    if (rectSourceSprite.left >= 2184){
 					
 			        rectSourceSprite.left = 0;
 					round = true;
 				}
 			    else
-			        rectSourceSprite.left += 127;
+			        rectSourceSprite.left += 156;
 				if (rectSourceSprite.left == 0){
 					attacking = true;
 					playerAttackRoll = generateRandomNumber();
@@ -495,15 +519,16 @@
 			}
 			if (direction == 3)
 			{
-				rectSourceSprite.height = 127;
-			    rectSourceSprite.top = 254;
-			    if (rectSourceSprite.left >= 700){
+				rectSourceSprite.height = 156;
+				rectSourceSprite.width = 156;
+			    rectSourceSprite.top = 1560;
+			    if (rectSourceSprite.left >= 2184){
 					
 			        rectSourceSprite.left = 0;
 					round = true;
 				}
 			    else
-			        rectSourceSprite.left += 127;
+			        rectSourceSprite.left += 156;
 				if (rectSourceSprite.left == 0){
 					attacking = true;
 					playerAttackRoll = generateRandomNumber();
@@ -522,15 +547,16 @@
 			}
 			if (direction == 4)
 			{
-				rectSourceSprite.height = 127;
-			    rectSourceSprite.top = 381;
-			    if (rectSourceSprite.left >= 700){
+				rectSourceSprite.height = 156;
+				rectSourceSprite.width = 156;
+			    rectSourceSprite.top = 1716;
+			    if (rectSourceSprite.left >= 2184){
 					
 			        rectSourceSprite.left = 0;
 					round = true;
 				}
 			    else
-			        rectSourceSprite.left += 127;
+			        rectSourceSprite.left += 156;
 				if (rectSourceSprite.left == 0){
 					attacking = true;
 					playerAttackRoll = generateRandomNumber();
@@ -549,15 +575,16 @@
 			}
 			if (direction == 5)
 			{
-				rectSourceSprite.height = 127;
-			    rectSourceSprite.top = 508;
-			    if (rectSourceSprite.left >= 700){
+				rectSourceSprite.height = 156;
+				rectSourceSprite.width = 156;
+			    rectSourceSprite.top = 1872;
+			    if (rectSourceSprite.left >= 2184){
 					
 			        rectSourceSprite.left = 0;
 					round = true;
 				}
 			    else
-			        rectSourceSprite.left += 127;
+			        rectSourceSprite.left += 156;
 				if (rectSourceSprite.left == 0){
 					attacking = true;
 					playerAttackRoll = generateRandomNumber();
@@ -576,15 +603,16 @@
 			}
 			if (direction == 6)
 			{
-				rectSourceSprite.height = 127;
-			    rectSourceSprite.top = 635;
-			    if (rectSourceSprite.left >= 700){
+				rectSourceSprite.height = 156;
+				rectSourceSprite.width = 156;
+			    rectSourceSprite.top = 2028;
+			    if (rectSourceSprite.left >= 2184){
 					
 			        rectSourceSprite.left = 0;
 					round = true;
 				}
 			    else
-			        rectSourceSprite.left += 127;
+			        rectSourceSprite.left += 156;
 				if (rectSourceSprite.left == 0){
 					attacking = true;
 					playerAttackRoll = generateRandomNumber();
@@ -603,15 +631,16 @@
 			}
 			if (direction == 7)
 			{
-				rectSourceSprite.height = 127;
-			    rectSourceSprite.top = 762;
-			    if (rectSourceSprite.left >= 700){
+				rectSourceSprite.height = 156;
+				rectSourceSprite.width = 156;
+			    rectSourceSprite.top = 2184;
+			    if (rectSourceSprite.left >= 2184){
 					
 			        rectSourceSprite.left = 0;
 					round = true;
 				}
 			    else
-			        rectSourceSprite.left += 127;
+			        rectSourceSprite.left += 156;
 				if (rectSourceSprite.left == 0){
 					attacking = true;
 					playerAttackRoll = generateRandomNumber();
@@ -630,15 +659,16 @@
 			}
 			if (direction == 8)
 			{
-				rectSourceSprite.height = 127;
-			    rectSourceSprite.top = 889;
-			    if (rectSourceSprite.left >= 700){
+				rectSourceSprite.height = 156;
+				rectSourceSprite.width = 156;
+			    rectSourceSprite.top = 2340;
+			    if (rectSourceSprite.left >= 2184){
 					
 			        rectSourceSprite.left = 0;
 					round = true;
 				}
 			    else
-			        rectSourceSprite.left += 127;
+			        rectSourceSprite.left += 156;
 				if (rectSourceSprite.left == 0){
 					attacking = true;
 					playerAttackRoll = generateRandomNumber();
