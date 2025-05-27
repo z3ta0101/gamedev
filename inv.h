@@ -59,7 +59,7 @@ public:
         if (defaultTexture.getSize().x == 0) { // Load default once
             if (!defaultTexture.loadFromFile("default_icon.png")) {
                 std::cerr << "Failed to load default texture\n";
-                defaultTexture.create(32, 32); // Fallback blank texture
+                defaultTexture.create(75, 75); // Adjusted to match typical slot size
             }
         }
 
@@ -146,12 +146,13 @@ public:
     sf::RectangleShape area;
     Item* item;
     ItemType allowedType;
+    const sf::Texture& originalTexture; // Store original texture for when slot is empty
 
-    EquipmentSlot(sf::Vector2f position, ItemType type, const sf::Texture& texture)
-        : allowedType(type), item(nullptr) {
-        area.setSize(sf::Vector2f(75.f, 75.f));
+    EquipmentSlot(sf::Vector2f position, ItemType type, const sf::Texture& texture, sf::Vector2f size)
+        : allowedType(type), item(nullptr), originalTexture(texture) {
+        area.setSize(size);
         area.setPosition(position);
-        area.setTexture(&texture);
+        area.setTexture(&originalTexture);
         area.setOutlineThickness(1.f);
         area.setOutlineColor(sf::Color::Transparent);
     }
@@ -162,14 +163,42 @@ public:
         if (newItem && canEquip(*newItem)) item = newItem;
     }
 
-    void unequipItem() { item = nullptr; }
+    void unequipItem() { 
+        item = nullptr; 
+    }
 
     void draw(sf::RenderWindow& window) {
-        window.draw(area);
         if (item) {
+            // Set slot background to black when item is present
+            area.setTexture(nullptr); // Remove texture
+            area.setFillColor(sf::Color::Black);
+
+            // Draw the slot background
+            window.draw(area);
+
+            // Draw the item sprite, resized and centered
             sf::Sprite itemSprite(IconManager::getIcon(item->iconPath));
-            itemSprite.setPosition(area.getPosition());
+            sf::Vector2f slotSize = area.getSize();
+            sf::Vector2u textureSize = itemSprite.getTexture()->getSize();
+
+            // Calculate scale to match slot size
+            float scaleX = slotSize.x / static_cast<float>(textureSize.x);
+            float scaleY = slotSize.y / static_cast<float>(textureSize.y);
+            itemSprite.setScale(scaleX, scaleY);
+
+            // Center the item sprite
+            sf::FloatRect spriteBounds = itemSprite.getLocalBounds();
+            itemSprite.setPosition(
+                area.getPosition().x + (slotSize.x - spriteBounds.width * scaleX) / 2,
+                area.getPosition().y + (slotSize.y - spriteBounds.height * scaleY) / 2
+            );
+
             window.draw(itemSprite);
+        } else {
+            // Use original texture when slot is empty
+            area.setTexture(&originalTexture);
+            area.setFillColor(sf::Color::White); // Reset to white to show texture
+            window.draw(area);
         }
     }
 
@@ -273,7 +302,7 @@ public:
     Inventory* inventory;
     sf::Texture emptySlotTexture;
     int draggedItemIndex = -1;
-    Item draggedItemStorage; // Pre-allocated storage for dragged item
+    Item draggedItemStorage;
     Item* draggedItem = nullptr;
     bool isDragging = false;
     sf::Sprite draggedItemSprite;
@@ -289,8 +318,8 @@ public:
                 const sf::Texture& emptySlotTexture, const sf::Vector2f& position, 
                 int rows, int cols, const sf::Texture& groundSlotTexture)
         : inventory(inventory), emptySlotTexture(emptySlotTexture), groundSlotTexture(groundSlotTexture),
-          draggedItemStorage() { // Initialize with default empty item
-        draggedItem = nullptr; // Ensure pointer starts null
+          draggedItemStorage() {
+        draggedItem = nullptr;
         background.setTexture(backgroundTexture);
         background.setPosition(position);
         background.setScale(2.f, 2.f);
@@ -328,16 +357,18 @@ public:
             groundSlots.emplace_back(sf::Vector2f(groundSlotX, groundSlotY + (i * (slotSize + padding))), groundSlotTexture, slotSize);
         }
 
-        equipmentSlots.emplace_back(sf::Vector2f(groundSlotX - 100.f, groundSlotY), ItemType::Weapon, emptySlotTexture);
-        equipmentSlots.emplace_back(sf::Vector2f(groundSlotX - 100.f, groundSlotY + slotSize + padding), ItemType::Armor, emptySlotTexture);
+        equipmentSlots.emplace_back(sf::Vector2f(groundSlotX - 410.f, groundSlotY + 151), ItemType::Weapon, 
+                                    IconManager::getIcon("/home/z3ta/c++/SoV/images/ui/weaponslot1.png"), sf::Vector2f(124.f, 142.f));
+        equipmentSlots.emplace_back(sf::Vector2f(groundSlotX - 270.f, groundSlotY + 151.f + padding), ItemType::Armor, 
+                                    IconManager::getIcon("/home/z3ta/c++/SoV/images/ui/armrslot1.png"), sf::Vector2f(124.f, 124.f));
     }
 
-    void startDragging(int index = -1, GroundSlot* groundSlot = nullptr) {
-        if (isDragging) return; // Prevent multiple drags
+    void startDragging(int index = -1, GroundSlot* groundSlot = nullptr, EquipmentSlot* equipmentSlot = nullptr) {
+        if (isDragging) return;
 
         if (index >= 0 && index < inventory->items.size() && inventory->items[index].id != -1) {
             draggedItemIndex = index;
-            draggedItemStorage = inventory->items[index]; // Copy to storage
+            draggedItemStorage = inventory->items[index];
             draggedItem = &draggedItemStorage;
             isDragging = true;
             draggedItemSprite.setTexture(IconManager::getIcon(draggedItem->iconPath));
@@ -345,12 +376,20 @@ public:
             std::cout << "Dragging from inventory: " << draggedItem->iconPath << "\n";
         } else if (groundSlot && groundSlot->getItem()) {
             draggedItemIndex = -1;
-            draggedItemStorage = *groundSlot->getItem(); // Copy to storage
+            draggedItemStorage = *groundSlot->getItem();
             draggedItem = &draggedItemStorage;
             isDragging = true;
             draggedItemSprite.setTexture(IconManager::getIcon(draggedItem->iconPath));
             groundSlot->removeItem();
             std::cout << "Dragging from ground: " << draggedItem->iconPath << "\n";
+        } else if (equipmentSlot && equipmentSlot->item) {
+            draggedItemIndex = -1;
+            draggedItemStorage = *equipmentSlot->item;
+            draggedItem = &draggedItemStorage;
+            isDragging = true;
+            draggedItemSprite.setTexture(IconManager::getIcon(draggedItem->iconPath));
+            equipmentSlot->unequipItem();
+            std::cout << "Dragging from equipment: " << draggedItem->iconPath << "\n";
         }
     }
 
@@ -362,16 +401,16 @@ public:
         for (auto& groundSlot : groundSlots) {
             if (groundSlot.contains(mousePos)) {
                 if (!groundSlot.item) {
-                    groundSlot.placeItem(new Item(*draggedItem)); // Create new item for placement
+                    groundSlot.placeItem(new Item(*draggedItem));
                     itemPlaced = true;
                 } else {
                     Item* temp = groundSlot.item;
                     groundSlot.placeItem(new Item(*draggedItem));
-                    draggedItemStorage = *temp; // Update storage with swapped item
-                    delete temp; // Clean up old item
+                    draggedItemStorage = *temp;
                     draggedItem = &draggedItemStorage;
                     draggedItemSprite.setTexture(IconManager::getIcon(draggedItem->iconPath));
-                    itemPlaced = true;
+                    std::cout << "Swapped with ground slot, now dragging: " << draggedItem->iconPath << "\n";
+                    delete temp;
                 }
                 break;
             }
@@ -402,21 +441,27 @@ public:
         if (!itemPlaced) {
             for (size_t i = 0; i < itemSlots.size(); ++i) {
                 if (itemSlots[i].getGlobalBounds().contains(mousePos)) {
-                    if (inventory->placeItem(*draggedItem, i)) {
+                    if (inventory->items[i].id == -1) {
+                        inventory->items[i] = *draggedItem;
                         itemPlaced = true;
+                    } else {
+                        Item temp = inventory->items[i];
+                        inventory->items[i] = *draggedItem;
+                        draggedItemStorage = temp;
+                        draggedItem = &draggedItemStorage;
+                        draggedItemSprite.setTexture(IconManager::getIcon(draggedItem->iconPath));
+                        std::cout << "Swapped with inventory slot " << i << ", now dragging: " << draggedItem->iconPath << "\n";
                     }
                     break;
                 }
             }
         }
 
-        if (!itemPlaced && draggedItemIndex != -1) {
-            inventory->placeItem(*draggedItem, draggedItemIndex);
+        if (itemPlaced) {
+            draggedItemIndex = -1;
+            draggedItem = nullptr;
+            isDragging = false;
         }
-
-        draggedItemIndex = -1;
-        draggedItem = nullptr;
-        isDragging = false;
     }
 
     void draw(sf::RenderWindow& window) {
@@ -434,7 +479,6 @@ public:
         bool mousePressedThisFrame = sf::Mouse::isButtonPressed(sf::Mouse::Left);
         bool rightClicked = sf::Mouse::isButtonPressed(sf::Mouse::Right) && !buttonWasPressed;
 
-        // Handle drag initiation before rendering
         if (mousePressedThisFrame && !buttonWasPressed) {
             buttonWasPressed = true;
             clickTimer.restart();
@@ -458,7 +502,7 @@ public:
                     }
                     for (auto& equipmentSlot : equipmentSlots) {
                         if (equipmentSlot.area.getGlobalBounds().contains(mousePos) && equipmentSlot.item) {
-                            startDragging(-1, nullptr);
+                            startDragging(-1, nullptr, &equipmentSlot);
                             break;
                         }
                     }
@@ -475,7 +519,6 @@ public:
             }
         }
 
-        // Render inventory slots
         for (size_t i = 0; i < itemSlots.size(); ++i) {
             itemSlots[i].setOutlineColor(itemSlots[i].getGlobalBounds().contains(mousePos) ? sf::Color::Yellow : sf::Color::Transparent);
             window.draw(itemSlots[i]);
@@ -503,7 +546,6 @@ public:
             }
         }
 
-        // Render ground slots
         for (auto& groundSlot : groundSlots) {
             groundSlot.setHighlight(groundSlot.contains(mousePos));
             if (!isDragging || (draggedItem && groundSlot.item != draggedItem)) {
@@ -511,7 +553,6 @@ public:
             }
         }
 
-        // Render equipment slots
         for (auto& equipmentSlot : equipmentSlots) {
             equipmentSlot.setHighlight(equipmentSlot.area.getGlobalBounds().contains(mousePos));
             if (!isDragging || (draggedItem && equipmentSlot.item != draggedItem)) {
@@ -519,7 +560,6 @@ public:
             }
         }
 
-        // Render dragged item
         if (isDragging && draggedItem) {
             std::cout << "Drawing dragged item, texture size: " 
                       << draggedItemSprite.getTexture()->getSize().x << "x" 
