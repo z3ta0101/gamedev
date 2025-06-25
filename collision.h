@@ -1296,6 +1296,8 @@
             collisionx = playerOriginal; // Reset player position
 			attackx = attackxOriginal;
 			player.setPosition(prevPos);
+            playerarmor.setPosition(prevPos);
+            playerclothes.setPosition(prevPos);
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
 
@@ -1334,6 +1336,305 @@
 			player.setPosition(prevPos);
             resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
         }
+
+        if (checkPolygonCollision(fjelnorthbarrier, collisionx, collisionNormal) && area == 5) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            playerclothes.setPosition(prevPos);
+            playerarmor.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+        if (checkPolygonCollision(fjelwestbarrier, collisionx, collisionNormal) && area == 5) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            playerclothes.setPosition(prevPos);
+            playerarmor.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+        if (checkPolygonCollision(fjeleastbarrier, collisionx, collisionNormal) && area == 5) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            playerclothes.setPosition(prevPos);
+            playerarmor.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+        if (checkPolygonCollision(fjelsouthbarrier, collisionx, collisionNormal) && area == 5) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            playerclothes.setPosition(prevPos);
+            playerarmor.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+        if (checkPolygonCollision(fjelhousebarrier1, collisionx, collisionNormal) && area == 5) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            playerclothes.setPosition(prevPos);
+            playerarmor.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+        if (checkPolygonCollision(fjelhousebarrier2, collisionx, collisionNormal) && area == 5) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            playerclothes.setPosition(prevPos);
+            playerarmor.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+        if (checkPolygonCollision(fjelhousebarrier3, collisionx, collisionNormal) && area == 5) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            playerclothes.setPosition(prevPos);
+            playerarmor.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+        if (checkPolygonCollision(fjelcliffbarrier1, collisionx, collisionNormal) && area == 5) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            playerclothes.setPosition(prevPos);
+            playerarmor.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+        if (checkPolygonCollision(fjelcliffbarrier2, collisionx, collisionNormal) && area == 5) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            playerclothes.setPosition(prevPos);
+            playerarmor.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+        if (checkPolygonCollision(fjelcliffbarrier3, collisionx, collisionNormal) && area == 5) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            playerclothes.setPosition(prevPos);
+            playerarmor.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+        if (checkPolygonCollision(fjelcliffbarrier4, collisionx, collisionNormal) && area == 5) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            playerclothes.setPosition(prevPos);
+            playerarmor.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+        if (checkPolygonCollision(fjelcliffbarrier5, collisionx, collisionNormal) && area == 5) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            playerclothes.setPosition(prevPos);
+            playerarmor.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+        if (checkPolygonCollision(fjelcliffbarrier6, collisionx, collisionNormal) && area == 5) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            playerclothes.setPosition(prevPos);
+            playerarmor.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+        if (checkPolygonCollision(fjelcliffbarrier7, collisionx, collisionNormal) && area == 5) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            playerclothes.setPosition(prevPos);
+            playerarmor.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+        if (checkPolygonCollision(fjelcliffbarrier8, collisionx, collisionNormal) && area == 5) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            playerclothes.setPosition(prevPos);
+            playerarmor.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+        if (checkPolygonCollision(fjelhouse2barrier1, collisionx, collisionNormal) && area == 5) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            playerclothes.setPosition(prevPos);
+            playerarmor.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+        if (checkPolygonCollision(fjelhouse2barrier2, collisionx, collisionNormal) && area == 5) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            playerclothes.setPosition(prevPos);
+            playerarmor.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+        if (checkPolygonCollision(fjelcliff2barrier1, collisionx, collisionNormal) && area == 5) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            playerclothes.setPosition(prevPos);
+            playerarmor.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+        if (checkPolygonCollision(fjelcliff2barrier2, collisionx, collisionNormal) && area == 5) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            playerclothes.setPosition(prevPos);
+            playerarmor.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+        if (checkPolygonCollision(fjelcliff2barrier3, collisionx, collisionNormal) && area == 5) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            playerclothes.setPosition(prevPos);
+            playerarmor.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+        if (checkPolygonCollision(fjelcliff2barrier4, collisionx, collisionNormal) && area == 5) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            playerclothes.setPosition(prevPos);
+            playerarmor.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+        if (checkPolygonCollision(fjelcliff2barrier5, collisionx, collisionNormal) && area == 5) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            playerclothes.setPosition(prevPos);
+            playerarmor.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+        if (checkPolygonCollision(fjelcliff2barrier6, collisionx, collisionNormal) && area == 5) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            playerclothes.setPosition(prevPos);
+            playerarmor.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+        if (checkPolygonCollision(fjelcliff2barrier7, collisionx, collisionNormal) && area == 5) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            playerclothes.setPosition(prevPos);
+            playerarmor.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+        if (checkPolygonCollision(fjelcliff2barrier8, collisionx, collisionNormal) && area == 5) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            playerclothes.setPosition(prevPos);
+            playerarmor.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+        if (checkPolygonCollision(fjelcliff2barrier9, collisionx, collisionNormal) && area == 5) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            playerclothes.setPosition(prevPos);
+            playerarmor.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+        if (checkPolygonCollision(fjelcliff2barrier10, collisionx, collisionNormal) && area == 5) {
+            // If a collision is detected, revert to the original position
+			
+            collisionx = playerOriginal; // Reset player position
+			attackx = attackxOriginal;
+			player.setPosition(prevPos);
+            playerclothes.setPosition(prevPos);
+            playerarmor.setPosition(prevPos);
+            resolveCollision(collisionx, collisionNormal); // Adjust player position based on collision normal
+        }
+
+
 
 		if (checkPolygonCollision(barrelx, attackx, collisionNormal) && attacking == true && round == true && area == 1) {
             // If an attack is detected, deal damage to the barrel
