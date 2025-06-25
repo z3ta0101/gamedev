@@ -5,184 +5,101 @@
 #include <iostream>
 #include <cmath>
 
-class Door {
-public:
-    Door(const sf::Vector2f& position, const std::string& texturePath)
-        : doorOpen(false), isClicked(false) {
+extern sf::Sprite player; // Keep for backward compatibility
+extern int area; // Keep for backward compatibility
+extern sf::Vector2f playerPos; // Declare extern for playerPos
 
-        // Load the door texture and initialize the sprite
+class Door1 {
+public:
+    Door1(const sf::Vector2f& position, const std::string& texturePath)
+        : doorOpen(false), isClicked(false) {
         if (!doorTexture.loadFromFile(texturePath)) {
             std::cerr << "Error loading door texture!" << std::endl;
         }
         doorSprite.setTexture(doorTexture);
         doorSprite.setPosition(position);
-        doorSprite.setTextureRect(sf::IntRect(0, 0, 338, 281));  // Initial door state (closed)
+        doorSprite.setTextureRect(sf::IntRect(0, 0, 828, 674));
 
-        // Set up the clickable polygon (assuming door is a rectangle)
-        doorPolygon.setPointCount(4);
-        doorPolygon.setPoint(0, sf::Vector2f(1052, -3228));
-        doorPolygon.setPoint(1, sf::Vector2f(1052, -3410));
-        doorPolygon.setPoint(2, sf::Vector2f(1159, -3429));
-        doorPolygon.setPoint(3, sf::Vector2f(1159, -3255));
-
-        // Set a transparent fill and visible outline color for debugging
+        doorPolygon.setPointCount(9);
+        doorPolygon.setPoint(0, sf::Vector2f(429, -1977));
+        doorPolygon.setPoint(1, sf::Vector2f(429, -2176));
+        doorPolygon.setPoint(2, sf::Vector2f(444, -2218));
+        doorPolygon.setPoint(3, sf::Vector2f(468, -2231));
+        doorPolygon.setPoint(4, sf::Vector2f(493, -2226));
+        doorPolygon.setPoint(5, sf::Vector2f(519, -2199));
+        doorPolygon.setPoint(6, sf::Vector2f(526, -2170));
+        doorPolygon.setPoint(7, sf::Vector2f(532, -2149));
+        doorPolygon.setPoint(8, sf::Vector2f(530, -2019));
         doorPolygon.setFillColor(sf::Color::Transparent);
         doorPolygon.setOutlineThickness(2);
+        doorPolygon.setOutlineColor(sf::Color::Transparent);
+
+        closeDoorPolygon.setPointCount(7);
+        closeDoorPolygon.setPoint(0, sf::Vector2f(434, -1979));
+        closeDoorPolygon.setPoint(1, sf::Vector2f(427, -2181));
+        closeDoorPolygon.setPoint(2, sf::Vector2f(419, -2197));
+        closeDoorPolygon.setPoint(3, sf::Vector2f(410, -2208));
+        closeDoorPolygon.setPoint(4, sf::Vector2f(393, -2192));
+        closeDoorPolygon.setPoint(5, sf::Vector2f(389, -2158));
+        closeDoorPolygon.setPoint(6, sf::Vector2f(386, -1933));
+        closeDoorPolygon.setFillColor(sf::Color::Transparent);
+        closeDoorPolygon.setOutlineThickness(2);
+        closeDoorPolygon.setOutlineColor(sf::Color::Transparent);
     }
 
-    void update(const sf::Vector2i& mousePos, sf::RenderWindow& window, const sf::Vector2f& playerPos) {
-        // Convert mouse position to world coordinates
+    bool update(const sf::Vector2i& mousePos, sf::RenderWindow& window, sf::Vector2f& playerPosRef) {
         sf::Vector2f worldMousePos = window.mapPixelToCoords(mousePos);
-
-        // Calculate the distance between the player and the door
-        float distanceToDoor = std::sqrt(std::pow(playerPos.x - doorSprite.getPosition().x, 2) +
-                                         std::pow(playerPos.y - doorSprite.getPosition().y, 2));
-
-        // Set a threshold distance for interaction
-        float interactionThreshold = 200.0f;
+        float distanceToDoor = std::sqrt(std::pow(playerPosRef.x - doorSprite.getPosition().x, 2) +
+                                         std::pow(playerPosRef.y - doorSprite.getPosition().y, 2));
+        float interactionThreshold = 500.0f;
+        bool transitioned = false;
 
         if (distanceToDoor <= interactionThreshold) {
-            bool isHovering = pointInPolygon(doorPolygon, worldMousePos);
+            if (doorOpen) {
+                bool isHoveringClose = pointInPolygon(closeDoorPolygon, worldMousePos);
+                closeDoorPolygon.setOutlineColor(isHoveringClose ? sf::Color::Blue : sf::Color::Transparent);
 
-            if (isHovering) {
-                doorPolygon.setOutlineColor(sf::Color::Blue);
-
-                // Handle click detection
-                if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !isClicked) {
-                    toggleDoorState(interactionThreshold);  // Pass global 'area'
-                    isClicked = true;
-                }
-            } else {
+                bool isHoveringEntry = pointInPolygon(doorPolygon, worldMousePos);
                 doorPolygon.setOutlineColor(sf::Color::Transparent);
-            }
-        } else {
-            doorPolygon.setOutlineColor(sf::Color::Transparent);
-        }
 
-        // Reset the isClicked flag when the mouse button is released
-        if (!sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
-            isClicked = false;
-        }
-    }
-
-    void render(sf::RenderWindow& window) {
-        window.draw(doorSprite);  // Draw the door sprite (with current animation)
-        window.draw(doorPolygon); // Draw the clickable polygon (for visual testing)
-    }
-
-    bool pointInPolygon(const sf::ConvexShape& polygon, const sf::Vector2f& point) {
-        bool inside = false;
-        int n = polygon.getPointCount();
-        int x1 = polygon.getPoint(0).x, y1 = polygon.getPoint(0).y;
-
-        for (int i = 1; i <= n; i++) {
-            int x2 = polygon.getPoint(i % n).x, y2 = polygon.getPoint(i % n).y;
-
-            if (point.y > std::min(y1, y2)) {
-                if (point.y <= std::max(y1, y2)) {
-                    if (point.x <= std::max(x1, x2)) {
-                        if (y1 != y2) {
-                            int xinters = (point.y - y1) * (x2 - x1) / (y2 - y1) + x1;
-                            if (x1 == x2 || point.x <= xinters) {
-                                inside = !inside;
-                            }
-                        }
+                if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !isClicked) {
+                    if (isHoveringClose) {
+                        toggleDoorState(false, playerPosRef);
+                        isClicked = true;
+                    } else if (isHoveringEntry) {
+                        toggleDoorState(true, playerPosRef);
+                        isClicked = true;
+                        transitioned = true;
                     }
                 }
-            }
-            x1 = x2;
-            y1 = y2;
-        }
-        return inside;
-    }
+            } else {
+                bool isHovering = pointInPolygon(doorPolygon, worldMousePos);
+                doorPolygon.setOutlineColor(isHovering ? sf::Color::Blue : sf::Color::Transparent);
+                closeDoorPolygon.setOutlineColor(sf::Color::Transparent);
 
-    void toggleDoorState(float interactionThreshold) {
-        if (doorOpen) {
-            doorSprite.setTextureRect(sf::IntRect(0, 0, 338, 281));  // Close door
-        } else {
-            doorSprite.setTextureRect(sf::IntRect(338, 0, 338, 281));  // Open door
-        }
-        doorOpen = !doorOpen;
-
-        if (!doorOpen && interactionThreshold <= 200.0f) {
-            area = 4;  // Update the area to 4 when the door opens and interaction is valid
-            player.setPosition(2255.0f, 4110.0f);  // Move the player to the new position
-        }
-    }
-
-private:
-    sf::Texture doorTexture;
-    sf::Sprite doorSprite;
-    sf::ConvexShape doorPolygon;
-    bool doorOpen;
-    bool isClicked;
-};
-
-// Second door class
-class Door2 {
-public:
-    // Updated constructor without sf::View& parameter
-    Door2(const sf::Vector2f& position, const std::string& texturePath)
-        : doorOpen(false), isClicked(false) {
-
-        // Load the door texture and initialize the sprite
-        if (!doorTexture.loadFromFile(texturePath)) {
-            std::cerr << "Error loading door texture!" << std::endl;
-        }
-        doorSprite.setTexture(doorTexture);
-        doorSprite.setPosition(position);
-        doorSprite.setTextureRect(sf::IntRect(0, 0, 570, 1732)); // Initial door state (closed)
-
-        // Set up the clickable polygon (assuming door is a rectangle)
-        doorPolygon.setPointCount(4);
-        doorPolygon.setPoint(0, sf::Vector2f(782, 1863));
-        doorPolygon.setPoint(1, sf::Vector2f(613, 2154));
-        doorPolygon.setPoint(2, sf::Vector2f(613, 2672));
-        doorPolygon.setPoint(3, sf::Vector2f(782, 2377));
-
-        // Set a transparent fill and visible outline color for debugging
-        doorPolygon.setFillColor(sf::Color::Transparent);
-        doorPolygon.setOutlineThickness(2);
-    }
-
-    void update(const sf::Vector2i& mousePos, sf::RenderWindow& window, const sf::Vector2f& playerPos) {
-        // Convert mouse position to world coordinates
-        sf::Vector2f worldMousePos = window.mapPixelToCoords(mousePos);
-
-        // Calculate the distance between the player and the door
-        float distanceToDoor = std::sqrt(std::pow(playerPos.x - doorSprite.getPosition().x - 170, 1.8) +
-                                         std::pow(playerPos.y - doorSprite.getPosition().y - 10, 1.8));
-
-        // Set a threshold distance for interaction (you can adjust this value as needed)
-        float interactionThreshold = 400.0f;  // You can change this value based on your needs
-
-        // If the player is close enough to the door, allow interaction
-        if (distanceToDoor <= interactionThreshold) {
-            bool isHovering = pointInPolygon(doorPolygon, worldMousePos);
-
-            if (isHovering) {
-                doorPolygon.setOutlineColor(sf::Color::Blue);
-
-                if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !isClicked) {
-                    toggleDoorState();
+                if (isHovering && sf::Mouse::isButtonPressed(sf::Mouse::Left) && !isClicked) {
+                    toggleDoorState(false, playerPosRef);
                     isClicked = true;
                 }
-            } else {
-                doorPolygon.setOutlineColor(sf::Color::Transparent);
             }
         } else {
             doorPolygon.setOutlineColor(sf::Color::Transparent);
+            closeDoorPolygon.setOutlineColor(sf::Color::Transparent);
         }
 
-        // Reset click flag when mouse button is released
         if (!sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
             isClicked = false;
         }
+
+        return transitioned;
     }
 
     void render(sf::RenderWindow& window) {
-        window.draw(doorSprite);     // Draw the door sprite
-        window.draw(doorPolygon);    // Draw the clickable polygon
+        window.draw(doorSprite);
+        window.draw(doorPolygon);
+        if (doorOpen) {
+            window.draw(closeDoorPolygon);
+        }
     }
 
     bool pointInPolygon(const sf::ConvexShape& polygon, const sf::Vector2f& point) {
@@ -192,7 +109,6 @@ public:
 
         for (int i = 1; i <= n; i++) {
             int x2 = polygon.getPoint(i % n).x, y2 = polygon.getPoint(i % n).y;
-
             if (point.y > std::min(y1, y2)) {
                 if (point.y <= std::max(y1, y2)) {
                     if (point.x <= std::max(x1, x2)) {
@@ -210,13 +126,115 @@ public:
         return inside;
     }
 
-    void toggleDoorState() {
-        if (doorOpen) {
-            doorSprite.setTextureRect(sf::IntRect(0, 0, 570, 1732));
+    void toggleDoorState(bool enterArea, sf::Vector2f& playerPosRef) {
+        if (enterArea && doorOpen) {
+            area = 4;
+            playerPosRef = sf::Vector2f(2255.0f, 4110.0f);
+            player.setPosition(playerPosRef);
+            std::cout << "Transitioning to area 4, playerPos: (" << playerPosRef.x << ", " << playerPosRef.y << ")\n";
         } else {
-            doorSprite.setTextureRect(sf::IntRect(570, 0, 570, 1732));
+            doorOpen = !doorOpen;
+            doorSprite.setTextureRect(doorOpen ? sf::IntRect(828, 0, 828, 674) : sf::IntRect(0, 0, 828, 674));
         }
-        doorOpen = !doorOpen;  // Toggle door state
+    }
+
+private:
+    sf::Texture doorTexture;
+    sf::Sprite doorSprite;
+    sf::ConvexShape doorPolygon;
+    sf::ConvexShape closeDoorPolygon;
+    bool doorOpen;
+    bool isClicked;
+};
+
+class Door2 {
+public:
+    Door2(const sf::Vector2f& position, const std::string& texturePath)
+        : doorOpen(false), isClicked(false) {
+        if (!doorTexture.loadFromFile(texturePath)) {
+            std::cerr << "Error loading door texture!" << std::endl;
+        }
+        doorSprite.setTexture(doorTexture);
+        doorSprite.setPosition(position);
+        doorSprite.setTextureRect(sf::IntRect(0, 0, 570, 1732));
+
+        doorPolygon.setPointCount(4);
+        doorPolygon.setPoint(0, sf::Vector2f(782, 1863));
+        doorPolygon.setPoint(1, sf::Vector2f(613, 2154));
+        doorPolygon.setPoint(2, sf::Vector2f(613, 2672));
+        doorPolygon.setPoint(3, sf::Vector2f(782, 2377));
+        doorPolygon.setFillColor(sf::Color::Transparent);
+        doorPolygon.setOutlineThickness(2);
+    }
+
+    bool update(const sf::Vector2i& mousePos, sf::RenderWindow& window, sf::Vector2f& playerPosRef) {
+        sf::Vector2f worldMousePos = window.mapPixelToCoords(mousePos);
+        float distanceToDoor = std::sqrt(std::pow(playerPosRef.x - doorSprite.getPosition().x - 170, 1.8) +
+                                         std::pow(playerPosRef.y - doorSprite.getPosition().y - 10, 1.8));
+        float interactionThreshold = 400.0f;
+        bool transitioned = false;
+
+        if (distanceToDoor <= interactionThreshold) {
+            bool isHovering = pointInPolygon(doorPolygon, worldMousePos);
+            doorPolygon.setOutlineColor(isHovering ? sf::Color::Blue : sf::Color::Transparent);
+
+            if (isHovering && sf::Mouse::isButtonPressed(sf::Mouse::Left) && !isClicked) {
+                transitioned = toggleDoorState(playerPosRef);
+                isClicked = true;
+            }
+        } else {
+            doorPolygon.setOutlineColor(sf::Color::Transparent);
+        }
+
+        if (!sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+            isClicked = false;
+        }
+
+        return transitioned;
+    }
+
+    void render(sf::RenderWindow& window) {
+        window.draw(doorSprite);
+        window.draw(doorPolygon);
+    }
+
+    bool pointInPolygon(const sf::ConvexShape& polygon, const sf::Vector2f& point) {
+        bool inside = false;
+        int n = polygon.getPointCount();
+        int x1 = polygon.getPoint(0).x, y1 = polygon.getPoint(0).y;
+
+        for (int i = 1; i <= n; i++) {
+            int x2 = polygon.getPoint(i % n).x, y2 = polygon.getPoint(i % n).y;
+            if (point.y > std::min(y1, y2)) {
+                if (point.y <= std::max(y1, y2)) {
+                    if (point.x <= std::max(x1, x2)) {
+                        if (y1 != y2) {
+                            int xinters = (point.y - y1) * (x2 - x1) / (y2 - y1) + x1;
+                            if (x1 == x2 || point.x <= xinters) {
+                                inside = !inside;
+                            }
+                        }
+                    }
+                }
+            }
+            x1 = x2; y1 = y2;
+        }
+        return inside;
+    }
+
+    bool toggleDoorState(sf::Vector2f& playerPosRef) {
+        doorOpen = !doorOpen;
+        if (doorOpen) {
+            doorSprite.setTextureRect(sf::IntRect(570, 0, 570, 1732));
+            area = 6;
+            playerPosRef = sf::Vector2f(1000.0f, 1000.0f);
+            player.setPosition(playerPosRef);
+            std::cout << "Transitioning to area 6, playerPos: (" << playerPosRef.x << ", " << playerPosRef.y << ")\n";
+            return true;
+        } else {
+            doorSprite.setTextureRect(sf::IntRect(0, 0, 570, 1732));
+            return false;
+        }
     }
 
 private:
@@ -229,92 +247,66 @@ private:
 
 class Door3 {
 public:
-    // Updated constructor without sf::View& parameter
     Door3(const sf::Vector2f& position, const std::string& texturePath)
         : doorOpen(false), isClicked(false) {
-        
-        // Load the door texture and initialize the sprite
         if (!doorTexture.loadFromFile(texturePath)) {
             std::cerr << "Error loading door texture!" << std::endl;
         }
         doorSprite.setTexture(doorTexture);
         doorSprite.setPosition(position);
-        doorSprite.setTextureRect(sf::IntRect(0, 0, 184, 537)); // Initial door state (closed)
+        doorSprite.setTextureRect(sf::IntRect(0, 0, 184, 537));
 
-        // Set up the clickable polygon (assuming door is a rectangle)
         doorPolygon.setPointCount(4);
         doorPolygon.setPoint(0, sf::Vector2f(8010, -3034));
         doorPolygon.setPoint(1, sf::Vector2f(8010, -2905));
         doorPolygon.setPoint(2, sf::Vector2f(7939, -3029));
         doorPolygon.setPoint(3, sf::Vector2f(7939, -3157));
-
-        // Set a transparent fill and visible outline color for debugging
         doorPolygon.setFillColor(sf::Color::Transparent);
         doorPolygon.setOutlineThickness(2);
     }
 
-    // Updated update function with sf::RenderWindow& window parameter
-    void update(const sf::Vector2i& mousePos, sf::RenderWindow& window, const sf::Vector2f& playerPos) {
-        // Convert mouse position to world coordinates
+    bool update(const sf::Vector2i& mousePos, sf::RenderWindow& window, sf::Vector2f& playerPosRef) {
         sf::Vector2f worldMousePos = window.mapPixelToCoords(mousePos);
+        float distanceToDoor = std::sqrt(std::pow(playerPosRef.x - doorSprite.getPosition().x, 2) +
+                                         std::pow(playerPosRef.y - doorSprite.getPosition().y, 2));
+        float interactionThreshold = 400.0f;
+        bool transitioned = false;
 
-        // Calculate the distance between the player and the door
-        float distanceToDoor = std::sqrt(std::pow(playerPos.x - doorSprite.getPosition().x, 2) +
-                                         std::pow(playerPos.y - doorSprite.getPosition().y, 2));
-
-        // Set a threshold distance for interaction (you can adjust this value as needed)
-        float interactionThreshold = 400.0f;  // You can change this value based on your needs
-
-        // If the player is close enough to the door, allow interaction
         if (distanceToDoor <= interactionThreshold) {
-            // Check if the mouse is hovering over the clickable polygon (use worldMousePos)
             bool isHovering = pointInPolygon(doorPolygon, worldMousePos);
-        
-            if (isHovering) {
-                // Set the outline to blue when the mouse is over the polygon
-                doorPolygon.setOutlineColor(sf::Color::Blue);
+            doorPolygon.setOutlineColor(isHovering ? sf::Color::Blue : sf::Color::Transparent);
 
-                // If the mouse is over the clickable polygon, handle click detection
-                if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !isClicked) {
-                    // Toggle door state on click
-                    toggleDoorState();
-                    isClicked = true;  // Prevent multiple toggles while holding down the mouse
-                }
-            } else {
-                // Make the outline transparent when the mouse is not over the polygon
-                doorPolygon.setOutlineColor(sf::Color::Transparent);
+            if (isHovering && sf::Mouse::isButtonPressed(sf::Mouse::Left) && !isClicked) {
+                transitioned = toggleDoorState(playerPosRef);
+                isClicked = true;
             }
         } else {
-            // Make the outline transparent if the player is too far from the door
             doorPolygon.setOutlineColor(sf::Color::Transparent);
         }
 
-        // If the mouse button is released, reset the isClicked flag
         if (!sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
             isClicked = false;
         }
 
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
-            std::cout << "World Mouse Position: (" 
-              << worldMousePos.x << ", " 
-              << worldMousePos.y << ")" << std::endl;
+        if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+            std::cout << "World Mouse Position: (" << worldMousePos.x << ", " << worldMousePos.y << ")\n";
         }
+
+        return transitioned;
     }
 
     void render(sf::RenderWindow& window) {
-        window.draw(doorSprite);     // Draw the door sprite (with current animation)
-        window.draw(doorPolygon);    // Draw the clickable polygon (for visual testing)
+        window.draw(doorSprite);
+        window.draw(doorPolygon);
     }
 
-    // Function to check if a point is inside the polygon (click detection)
     bool pointInPolygon(const sf::ConvexShape& polygon, const sf::Vector2f& point) {
         bool inside = false;
         int n = polygon.getPointCount();
         int x1 = polygon.getPoint(0).x, y1 = polygon.getPoint(0).y;
-    
+
         for (int i = 1; i <= n; i++) {
             int x2 = polygon.getPoint(i % n).x, y2 = polygon.getPoint(i % n).y;
-        
             if (point.y > std::min(y1, y2)) {
                 if (point.y <= std::max(y1, y2)) {
                     if (point.x <= std::max(x1, x2)) {
@@ -332,114 +324,91 @@ public:
         return inside;
     }
 
-    // Function to toggle the door animation (open/closed)
-    void toggleDoorState() {
+    bool toggleDoorState(sf::Vector2f& playerPosRef) {
+        doorOpen = !doorOpen;
         if (doorOpen) {
-            // Set door to closed (left = 0)
-            doorSprite.setTextureRect(sf::IntRect(0, 0, 184, 537));
-        } else {
-            // Set door to open (left = 338 for example)
             doorSprite.setTextureRect(sf::IntRect(184, 0, 184, 537));
+            area = 7;
+            playerPosRef = sf::Vector2f(2000.0f, 2000.0f);
+            player.setPosition(playerPosRef);
+            std::cout << "Transitioning to area 7, playerPos: (" << playerPosRef.x << ", " << playerPosRef.y << ")\n";
+            return true;
+        } else {
+            doorSprite.setTextureRect(sf::IntRect(0, 0, 184, 537));
+            return false;
         }
-        doorOpen = !doorOpen;  // Toggle the door state
     }
 
 private:
     sf::Texture doorTexture;
     sf::Sprite doorSprite;
     sf::ConvexShape doorPolygon;
-    bool doorOpen;  // Track if the door is open or closed
-    bool isClicked; // To prevent multiple toggles from a single click
+    bool doorOpen;
+    bool isClicked;
 };
 
 class Door4 {
 public:
-    // Updated constructor without sf::View& parameter
     Door4(const sf::Vector2f& position, const std::string& texturePath)
         : doorOpen(false), isClicked(false) {
-        
-        // Load the door texture and initialize the sprite
         if (!doorTexture.loadFromFile(texturePath)) {
             std::cerr << "Error loading door texture!" << std::endl;
         }
         doorSprite.setTexture(doorTexture);
         doorSprite.setPosition(position);
-        doorSprite.setTextureRect(sf::IntRect(0, 0, 410, 794)); // Initial door state (closed)
+        doorSprite.setTextureRect(sf::IntRect(0, 0, 410, 794));
 
-        // Set up the clickable polygon (assuming door is a rectangle)
         doorPolygon.setPointCount(4);
         doorPolygon.setPoint(0, sf::Vector2f(9898, 1217));
         doorPolygon.setPoint(1, sf::Vector2f(9898, 1467));
         doorPolygon.setPoint(2, sf::Vector2f(10052, 1622));
         doorPolygon.setPoint(3, sf::Vector2f(10052, 1371));
-
-        // Set a transparent fill and visible outline color for debugging
         doorPolygon.setFillColor(sf::Color::Transparent);
         doorPolygon.setOutlineThickness(2);
     }
 
-    // Updated update function with sf::RenderWindow& window parameter
-    void update(const sf::Vector2i& mousePos, sf::RenderWindow& window, const sf::Vector2f& playerPos) {
-        // Convert mouse position to world coordinates
+    bool update(const sf::Vector2i& mousePos, sf::RenderWindow& window, sf::Vector2f& playerPosRef) {
         sf::Vector2f worldMousePos = window.mapPixelToCoords(mousePos);
+        float distanceToDoor = std::sqrt(std::pow(playerPosRef.x - doorSprite.getPosition().x, 2) +
+                                         std::pow(playerPosRef.y - doorSprite.getPosition().y, 2));
+        float interactionThreshold = 700.0f;
+        bool transitioned = false;
 
-        // Calculate the distance between the player and the door
-        float distanceToDoor = std::sqrt(std::pow(playerPos.x - doorSprite.getPosition().x, 2) +
-                                         std::pow(playerPos.y - doorSprite.getPosition().y, 2));
-
-        // Set a threshold distance for interaction (you can adjust this value as needed)
-        float interactionThreshold = 700.0f;  // You can change this value based on your needs
-
-        // If the player is close enough to the door, allow interaction
         if (distanceToDoor <= interactionThreshold) {
-            // Check if the mouse is hovering over the clickable polygon (use worldMousePos)
             bool isHovering = pointInPolygon(doorPolygon, worldMousePos);
-        
-            if (isHovering) {
-                // Set the outline to blue when the mouse is over the polygon
-                doorPolygon.setOutlineColor(sf::Color::Blue);
+            doorPolygon.setOutlineColor(isHovering ? sf::Color::Blue : sf::Color::Transparent);
 
-                // If the mouse is over the clickable polygon, handle click detection
-                if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !isClicked) {
-                    // Toggle door state on click
-                    toggleDoorState();
-                    isClicked = true;  // Prevent multiple toggles while holding down the mouse
-                }
-            } else {
-                // Make the outline transparent when the mouse is not over the polygon
-                doorPolygon.setOutlineColor(sf::Color::Transparent);
+            if (isHovering && sf::Mouse::isButtonPressed(sf::Mouse::Left) && !isClicked) {
+                transitioned = toggleDoorState(playerPosRef);
+                isClicked = true;
             }
         } else {
-            // Make the outline transparent if the player is too far from the door
             doorPolygon.setOutlineColor(sf::Color::Transparent);
         }
 
-        // If the mouse button is released, reset the isClicked flag
         if (!sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
             isClicked = false;
         }
 
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
-            std::cout << "World Mouse Position: (" 
-              << worldMousePos.x << ", " 
-              << worldMousePos.y << ")" << std::endl;
+        if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+            std::cout << "World Mouse Position: (" << worldMousePos.x << ", " << worldMousePos.y << ")\n";
         }
+
+        return transitioned;
     }
 
     void render(sf::RenderWindow& window) {
-        window.draw(doorSprite);     // Draw the door sprite (with current animation)
-        window.draw(doorPolygon);    // Draw the clickable polygon (for visual testing)
+        window.draw(doorSprite);
+        window.draw(doorPolygon);
     }
 
-    // Function to check if a point is inside the polygon (click detection)
     bool pointInPolygon(const sf::ConvexShape& polygon, const sf::Vector2f& point) {
         bool inside = false;
         int n = polygon.getPointCount();
         int x1 = polygon.getPoint(0).x, y1 = polygon.getPoint(0).y;
-    
+
         for (int i = 1; i <= n; i++) {
             int x2 = polygon.getPoint(i % n).x, y2 = polygon.getPoint(i % n).y;
-        
             if (point.y > std::min(y1, y2)) {
                 if (point.y <= std::max(y1, y2)) {
                     if (point.x <= std::max(x1, x2)) {
@@ -457,24 +426,163 @@ public:
         return inside;
     }
 
-    // Function to toggle the door animation (open/closed)
-    void toggleDoorState() {
+    bool toggleDoorState(sf::Vector2f& playerPosRef) {
+        doorOpen = !doorOpen;
         if (doorOpen) {
-            // Set door to closed (left = 0)
-            doorSprite.setTextureRect(sf::IntRect(0, 0, 410, 794));
-        } else {
-            // Set door to open (left = 338 for example)
             doorSprite.setTextureRect(sf::IntRect(410, 0, 410, 794));
+            area = 8;
+            playerPosRef = sf::Vector2f(3000.0f, 3000.0f);
+            player.setPosition(playerPosRef);
+            std::cout << "Transitioning to area 8, playerPos: (" << playerPosRef.x << ", " << playerPosRef.y << ")\n";
+            return true;
+        } else {
+            doorSprite.setTextureRect(sf::IntRect(0, 0, 410, 794));
+            return false;
         }
-        doorOpen = !doorOpen;  // Toggle the door state
     }
 
 private:
     sf::Texture doorTexture;
     sf::Sprite doorSprite;
     sf::ConvexShape doorPolygon;
-    bool doorOpen;  // Track if the door is open or closed
-    bool isClicked; // To prevent multiple toggles from a single click
+    bool doorOpen;
+    bool isClicked;
+};
+
+class PolyDoor {
+public:
+    PolyDoor()
+        : doorOpen(false), isClicked(false) {
+        doorPolygon.setPointCount(8);
+        doorPolygon.setPoint(0, sf::Vector2f(2531, 3898));
+        doorPolygon.setPoint(1, sf::Vector2f(2531, 3621));
+        doorPolygon.setPoint(2, sf::Vector2f(2540, 3578));
+        doorPolygon.setPoint(3, sf::Vector2f(2585, 3561));
+        doorPolygon.setPoint(4, sf::Vector2f(2604, 3564));
+        doorPolygon.setPoint(5, sf::Vector2f(2639, 3571));
+        doorPolygon.setPoint(6, sf::Vector2f(2655, 3608));
+        doorPolygon.setPoint(7, sf::Vector2f(2667, 3898));
+        doorPolygon.setFillColor(sf::Color::Blue);
+        doorPolygon.setOutlineThickness(2);
+        doorPolygon.setOutlineColor(sf::Color::Transparent);
+
+        closeDoorPolygon.setPointCount(8);
+        closeDoorPolygon.setPoint(0, sf::Vector2f(2431, 3898));
+        closeDoorPolygon.setPoint(1, sf::Vector2f(2431, 3621));
+        closeDoorPolygon.setPoint(2, sf::Vector2f(2440, 3578));
+        closeDoorPolygon.setPoint(3, sf::Vector2f(2485, 3561));
+        closeDoorPolygon.setPoint(4, sf::Vector2f(2504, 3564));
+        closeDoorPolygon.setPoint(5, sf::Vector2f(2539, 3571));
+        closeDoorPolygon.setPoint(6, sf::Vector2f(2555, 3608));
+        closeDoorPolygon.setPoint(7, sf::Vector2f(2567, 3898));
+        closeDoorPolygon.setFillColor(sf::Color::Transparent);
+        closeDoorPolygon.setOutlineThickness(2);
+        closeDoorPolygon.setOutlineColor(sf::Color::Transparent);
+    }
+
+    bool update(const sf::Vector2i& mousePos, sf::RenderWindow& window, sf::Vector2f& playerPosRef) {
+        sf::Vector2f worldMousePos = window.mapPixelToCoords(mousePos);
+        sf::Vector2f doorCenter(2600, 3700);
+        float distanceToDoor = std::sqrt(std::pow(playerPosRef.x - doorCenter.x, 2) +
+                                         std::pow(playerPosRef.y - doorCenter.y, 2));
+        float interactionThreshold = 500.0f;
+        bool transitioned = false;
+
+        if (distanceToDoor <= interactionThreshold) {
+            if (doorOpen) {
+                bool isHoveringClose = pointInPolygon(closeDoorPolygon, worldMousePos);
+                closeDoorPolygon.setFillColor(isHoveringClose ? sf::Color::Blue : sf::Color::Transparent);
+                closeDoorPolygon.setOutlineColor(isHoveringClose ? sf::Color::Blue : sf::Color::Transparent);
+
+                bool isHoveringEntry = pointInPolygon(doorPolygon, worldMousePos);
+                doorPolygon.setFillColor(sf::Color::Transparent);
+                doorPolygon.setOutlineColor(sf::Color::Transparent);
+
+                if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !isClicked) {
+                    if (isHoveringClose) {
+                        toggleDoorState(false, playerPosRef);
+                        isClicked = true;
+                    } else if (isHoveringEntry) {
+                        toggleDoorState(true, playerPosRef);
+                        isClicked = true;
+                        transitioned = true;
+                    }
+                }
+            } else {
+                bool isHovering = pointInPolygon(doorPolygon, worldMousePos);
+                doorPolygon.setFillColor(isHovering ? sf::Color::Blue : sf::Color(0, 0, 255, 128));
+                doorPolygon.setOutlineColor(isHovering ? sf::Color::Blue : sf::Color::Transparent);
+                closeDoorPolygon.setFillColor(sf::Color::Transparent);
+                closeDoorPolygon.setOutlineColor(sf::Color::Transparent);
+
+                if (isHovering && sf::Mouse::isButtonPressed(sf::Mouse::Left) && !isClicked) {
+                    toggleDoorState(false, playerPosRef);
+                    isClicked = true;
+                }
+            }
+        } else {
+            doorPolygon.setFillColor(sf::Color(0, 0, 255, 128));
+            doorPolygon.setOutlineColor(sf::Color::Transparent);
+            closeDoorPolygon.setFillColor(sf::Color::Transparent);
+            closeDoorPolygon.setOutlineColor(sf::Color::Transparent);
+        }
+
+        if (!sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+            isClicked = false;
+        }
+
+        return transitioned;
+    }
+
+    void render(sf::RenderWindow& window) {
+        window.draw(doorPolygon);
+        if (doorOpen) {
+            window.draw(closeDoorPolygon);
+        }
+    }
+
+    bool pointInPolygon(const sf::ConvexShape& polygon, const sf::Vector2f& point) {
+        bool inside = false;
+        int n = polygon.getPointCount();
+        int x1 = polygon.getPoint(0).x, y1 = polygon.getPoint(0).y;
+
+        for (int i = 1; i <= n; i++) {
+            int x2 = polygon.getPoint(i % n).x, y2 = polygon.getPoint(i % n).y;
+            if (point.y > std::min(y1, y2)) {
+                if (point.y <= std::max(y1, y2)) {
+                    if (point.x <= std::max(x1, x2)) {
+                        if (y1 != y2) {
+                            int xinters = (point.y - y1) * (x2 - x1) / (y2 - y1) + x1;
+                            if (x1 == x2 || point.x <= xinters) {
+                                inside = !inside;
+                            }
+                        }
+                    }
+                }
+            }
+            x1 = x2; y1 = y2;
+        }
+        return inside;
+    }
+
+    void toggleDoorState(bool enterArea, sf::Vector2f& playerPosRef) {
+        if (enterArea && doorOpen) {
+            area = 5;
+            playerPosRef = sf::Vector2f(498.0f, -1808.0f);
+            player.setPosition(playerPosRef);
+            std::cout << "Transitioning to area 5, playerPos: (" << playerPosRef.x << ", " << playerPosRef.y << ")\n";
+        } else {
+            doorOpen = !doorOpen;
+            doorPolygon.setFillColor(doorOpen ? sf::Color::Transparent : sf::Color::Blue);
+            closeDoorPolygon.setFillColor(doorOpen ? sf::Color::Blue : sf::Color::Transparent);
+        }
+    }
+
+private:
+    sf::ConvexShape doorPolygon;
+    sf::ConvexShape closeDoorPolygon;
+    bool doorOpen;
+    bool isClicked;
 };
 
 #endif // DOOR_H
