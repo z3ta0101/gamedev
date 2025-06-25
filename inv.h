@@ -68,7 +68,7 @@ public:
             if (texture.loadFromFile(iconPath)) {
                 textures[iconPath] = texture;
             } else {
-                std::cerr << "Error loading texture: " << iconPath << std::endl;
+                std::cerr << "Error loading texture: " << iconPath << "\n";
                 textures[iconPath] = defaultTexture; // Cache default on failure
             }
         }
@@ -146,7 +146,7 @@ public:
     sf::RectangleShape area;
     Item* item;
     ItemType allowedType;
-    const sf::Texture& originalTexture; // Store original texture for when slot is empty
+    const sf::Texture& originalTexture;
 
     EquipmentSlot(sf::Vector2f position, ItemType type, const sf::Texture& texture, sf::Vector2f size)
         : allowedType(type), item(nullptr), originalTexture(texture) {
@@ -169,24 +169,18 @@ public:
 
     void draw(sf::RenderWindow& window) {
         if (item) {
-            // Set slot background to black when item is present
-            area.setTexture(nullptr); // Remove texture
+            area.setTexture(nullptr);
             area.setFillColor(sf::Color::Black);
-
-            // Draw the slot background
             window.draw(area);
 
-            // Draw the item sprite, resized and centered
             sf::Sprite itemSprite(IconManager::getIcon(item->iconPath));
             sf::Vector2f slotSize = area.getSize();
             sf::Vector2u textureSize = itemSprite.getTexture()->getSize();
 
-            // Calculate scale to match slot size
             float scaleX = slotSize.x / static_cast<float>(textureSize.x);
             float scaleY = slotSize.y / static_cast<float>(textureSize.y);
             itemSprite.setScale(scaleX, scaleY);
 
-            // Center the item sprite
             sf::FloatRect spriteBounds = itemSprite.getLocalBounds();
             itemSprite.setPosition(
                 area.getPosition().x + (slotSize.x - spriteBounds.width * scaleX) / 2,
@@ -195,9 +189,8 @@ public:
 
             window.draw(itemSprite);
         } else {
-            // Use original texture when slot is empty
             area.setTexture(&originalTexture);
-            area.setFillColor(sf::Color::White); // Reset to white to show texture
+            area.setFillColor(sf::Color::White);
             window.draw(area);
         }
     }
@@ -211,8 +204,9 @@ class Inventory {
 public:
     std::vector<Item> items;
     int maxSlots;
+    int gold; // Track player gold
 
-    Inventory(int maxSlots) : maxSlots(maxSlots) {
+    Inventory(int maxSlots) : maxSlots(maxSlots), gold(140) { // Start with 140 gold
         items.resize(maxSlots, Item());
     }
 
@@ -220,12 +214,14 @@ public:
         for (auto& existingItem : items) {
             if (existingItem.id == -1) {
                 existingItem = item;
+                std::cout << "Added item: " << item.name << "\n";
                 return true;
             }
             if (existingItem.id == item.id && existingItem.stackable) {
                 int space = existingItem.maxStackSize - existingItem.quantity;
                 if (space > 0) {
                     existingItem.quantity += std::min(space, item.quantity);
+                    std::cout << "Stacked item: " << item.name << ", Added " << std::min(space, item.quantity) << "\n";
                     return true;
                 }
             }
@@ -236,6 +232,7 @@ public:
     bool removeItem(int itemId) {
         for (auto& item : items) {
             if (item.id == itemId) {
+                std::cout << "Removed item: " << item.name << "\n";
                 item = Item();
                 return true;
             }
@@ -255,21 +252,32 @@ public:
 
         if (items[targetSlotIndex].id == -1) {
             items[targetSlotIndex] = item;
+            std::cout << "Placed item: " << item.name << "\n";
             return true;
         } else if (items[targetSlotIndex].id == item.id && items[targetSlotIndex].stackable) {
             int space = items[targetSlotIndex].maxStackSize - items[targetSlotIndex].quantity;
             if (space >= item.quantity) {
                 items[targetSlotIndex].quantity += item.quantity;
+                std::cout << "Stacked item in slot: " << item.name << "\n";
                 return true;
             }
         }
         Item temp = items[targetSlotIndex];
         items[targetSlotIndex] = item;
+        std::cout << "Swapped item: " << item.name << "\n";
         return addItem(temp);
+    }
+
+    int getGold() const { return gold; }
+
+    void setGold(int amount) {
+        gold = std::max(0, amount);
+        std::cout << "Gold set to: " << gold << "\n";
     }
 
     void saveInventory(const std::string& filename) {
         std::ofstream file(filename);
+        file << "Gold: " << gold << "\n"; // Save gold
         for (const auto& item : items) {
             if (item.id != -1) file << item.id << " " << item.quantity << "\n";
         }
@@ -279,6 +287,11 @@ public:
         std::ifstream file(filename);
         items.clear();
         items.resize(maxSlots, Item());
+        std::string line;
+        if (std::getline(file, line) && line.find("Gold: ") == 0) {
+            gold = std::stoi(line.substr(6));
+            std::cout << "Loaded gold: " << gold << "\n";
+        }
         int id, quantity;
         while (file >> id >> quantity) {
             for (auto& item : items) {
@@ -310,6 +323,9 @@ public:
     sf::Font font;
     sf::Text tooltipText;
     sf::Text quantityText;
+    sf::Text goldText; // Text for gold display
+    sf::Sprite goldSprite; // Sprite for gold pile
+    sf::Texture goldTexture; // Texture for gold pile
     bool buttonWasPressed = false;
     sf::Clock clickTimer;
     float clickThreshold = 0.2f;
@@ -335,9 +351,29 @@ public:
         quantityText.setCharacterSize(12);
         quantityText.setFillColor(sf::Color::White);
 
+        // Load gold pile texture
+        if (!goldTexture.loadFromFile("/home/z3ta/c++/SoV/images/ui/inv/goldpile.png")) {
+            std::cerr << "Failed to load gold pile texture\n";
+        }
+        goldSprite.setTexture(goldTexture);
+
+        goldText.setFont(font);
+        goldText.setCharacterSize(16);
+        goldText.setFillColor(sf::Color::Yellow);
+        // Position gold sprite and text below 4x4 item slots, centered horizontally
         float slotSize = 75.f;
         float padding = 10.f;
+        float panelWidth = cols * (slotSize + padding) - padding;
         float startY = position.y + background.getGlobalBounds().height / 2 - (rows * (slotSize + padding)) / 2;
+        float goldSpriteY = startY + rows * (slotSize + padding) + 10.f; // 10px below slots
+        float goldTextY = goldSpriteY + 32.f + 5.f; // 32px (sprite height) + 5px below sprite
+        float centerX = position.x + panelWidth / 2;
+        goldSprite.setPosition(centerX - 16.f, goldSpriteY); // Center sprite (32/2 = 16)
+        goldText.setPosition(centerX, goldTextY);
+        goldText.setString(std::to_string(inventory->getGold()));
+        // Center text horizontally
+        sf::FloatRect goldBounds = goldText.getLocalBounds();
+        goldText.setOrigin(goldBounds.width / 2, 0);
 
         for (int row = 0; row < rows; ++row) {
             for (int col = 0; col < cols; ++col) {
@@ -361,6 +397,13 @@ public:
                                     IconManager::getIcon("/home/z3ta/c++/SoV/images/ui/weaponslot1.png"), sf::Vector2f(124.f, 142.f));
         equipmentSlots.emplace_back(sf::Vector2f(groundSlotX - 270.f, groundSlotY + 151.f + padding), ItemType::Armor, 
                                     IconManager::getIcon("/home/z3ta/c++/SoV/images/ui/armrslot1.png"), sf::Vector2f(124.f, 124.f));
+    }
+
+    int getEquippedArmorId() const {
+        if (equipmentSlots.size() > 1 && equipmentSlots[1].item) {
+            return equipmentSlots[1].item->id;
+        }
+        return -1; // No item equipped
     }
 
     void startDragging(int index = -1, GroundSlot* groundSlot = nullptr, EquipmentSlot* equipmentSlot = nullptr) {
@@ -389,6 +432,12 @@ public:
             isDragging = true;
             draggedItemSprite.setTexture(IconManager::getIcon(draggedItem->iconPath));
             equipmentSlot->unequipItem();
+            if (equipmentSlot == &equipmentSlots[1]) {
+                isPlatemailEquipped = false;
+                playerArmor -= 9;
+                std::cout << "Unequipped armor: " << playerArmor << "\n";
+                std::cout << "Unequipped armor: " << draggedItem->iconPath << "\n";
+            }
             std::cout << "Dragging from equipment: " << draggedItem->iconPath << "\n";
         }
     }
@@ -423,6 +472,11 @@ public:
                         if (!equipmentSlot.item) {
                             equipmentSlot.equipItem(new Item(*draggedItem));
                             itemPlaced = true;
+                            if (&equipmentSlot == &equipmentSlots[1]) {
+                                isPlatemailEquipped = true;
+                                playerArmor += 9;
+                                std::cout << "Equipped armor: " << playerArmor << "\n";
+                            }
                         } else {
                             Item* temp = equipmentSlot.item;
                             equipmentSlot.equipItem(new Item(*draggedItem));
@@ -431,6 +485,10 @@ public:
                             draggedItem = &draggedItemStorage;
                             draggedItemSprite.setTexture(IconManager::getIcon(draggedItem->iconPath));
                             itemPlaced = true;
+                            if (&equipmentSlot == &equipmentSlots[1]) {
+                                isPlatemailEquipped = true;
+                                std::cout << "Swapped armor: " << draggedItem->iconPath << "\n";
+                            }
                         }
                     }
                     break;
@@ -567,6 +625,13 @@ public:
             draggedItemSprite.setPosition(mousePos.x - 32, mousePos.y - 32);
             window.draw(draggedItemSprite);
         }
+
+        // Draw gold pile and gold text
+        window.draw(goldSprite);
+        goldText.setString(std::to_string(inventory->getGold()));
+        sf::FloatRect goldBounds = goldText.getLocalBounds();
+        goldText.setOrigin(goldBounds.width / 2, 0); // Re-center if gold changes
+        window.draw(goldText);
 
         window.setView(originalView);
     }
