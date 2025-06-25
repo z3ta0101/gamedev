@@ -39,7 +39,7 @@ public:
 
     // Constructor to initialize the enemy's position and load the texture
     Enemy(float startX, float startY, int& playerHealth, int& playerArmor) : x(startX), y(startY), direction(0), animationTimer(0.0f), isMoving(false), playerhealth(playerHealth), playerarmor(playerArmor) {
-        if (!texture.loadFromFile(ASSETS_DIR "/images/sprites/skelspritesheetx.png")) {
+        if (!texture.loadFromFile("/home/z3ta/c++/SoV/images/sprites/skelspritesheetx.png")) {
             std::cerr << "Error loading enemy texture!" << std::endl;
         }
 
