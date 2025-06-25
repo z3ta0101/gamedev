@@ -979,4 +979,172 @@
 		Vectorx2f(2565, 1630)
 	};
 
+	// Fjelenvar collision vertices
+
+	// North barrier
+
+	Polygon fjelnorthbarrier;
+	fjelnorthbarrier.vertices = {
+		Vectorx2f(0, -4200),
+		Vectorx2f(5000, -4200)
+	};
+
+	Polygon fjelwestbarrier;
+	fjelwestbarrier.vertices = {
+		Vectorx2f(0, -4200),
+		Vectorx2f(0, 800)
+	};
+
+	Polygon fjeleastbarrier;
+	fjeleastbarrier.vertices = {
+		Vectorx2f(5000, -4200),
+		Vectorx2f(5000, 800)
+	};
+
+	Polygon fjelsouthbarrier;
+	fjelsouthbarrier.vertices = {
+		Vectorx2f(0, 700),
+		Vectorx2f(5000, 700)
+	};
+
+	Polygon fjelhousebarrier1;
+	fjelhousebarrier1.vertices = {
+		Vectorx2f(1007, 900),
+		Vectorx2f(0, 325)
+	};
+
+	Polygon fjelhousebarrier2;
+	fjelhousebarrier2.vertices = {
+		Vectorx2f(0, -1889),
+		Vectorx2f(899, -2273)
+	};
+
+	Polygon fjelhousebarrier3;
+	fjelhousebarrier3.vertices = {
+		Vectorx2f(899, -2273),
+		Vectorx2f(899, -2607)
+	};
+
+	Polygon fjelcliffbarrier1;
+	fjelcliffbarrier1.vertices = {
+		Vectorx2f(899, -2607),
+		Vectorx2f(1912, -2873)
+	};
+
+	Polygon fjelcliffbarrier2;
+	fjelcliffbarrier2.vertices = {
+		Vectorx2f(1912, -2873),
+		Vectorx2f(2189, -3070)
+	};
+
+	Polygon fjelcliffbarrier3;
+	fjelcliffbarrier3.vertices = {
+		Vectorx2f(2189, -3070),
+		Vectorx2f(2762, -3196)
+	};
+
+	Polygon fjelcliffbarrier4;
+	fjelcliffbarrier4.vertices = {
+		Vectorx2f(2762, -3196),
+		Vectorx2f(3055, -3196)
+	};
+
+	Polygon fjelcliffbarrier5;
+	fjelcliffbarrier5.vertices = {
+		Vectorx2f(3055, -3196),
+		Vectorx2f(3236, -3162)
+	};
+
+	Polygon fjelcliffbarrier6;
+	fjelcliffbarrier6.vertices = {
+		Vectorx2f(3236, -3162),
+		Vectorx2f(3736, -3021)
+	};
+
+	Polygon fjelcliffbarrier7;
+	fjelcliffbarrier7.vertices = {
+		Vectorx2f(3736, -3021),
+		Vectorx2f(4026, -2844)
+	};
+
+	Polygon fjelcliffbarrier8;
+	fjelcliffbarrier8.vertices = {
+		Vectorx2f(4026, -2844),
+		Vectorx2f(4328, -2425)
+	};
+
+	Polygon fjelhouse2barrier1;
+	fjelhouse2barrier1.vertices = {
+		Vectorx2f(4328, -2425),
+		Vectorx2f(4328, -2105)
+	};
+
+	Polygon fjelhouse2barrier2;
+	fjelhouse2barrier2.vertices = {
+		Vectorx2f(4328, -2105),
+		Vectorx2f(5000, -1795)
+	};
+
+	Polygon fjelcliff2barrier1;
+	fjelcliff2barrier1.vertices = {
+		Vectorx2f(5000, -790),
+		Vectorx2f(4173, -784)
+	};
+
+	Polygon fjelcliff2barrier2;
+	fjelcliff2barrier2.vertices = {
+		Vectorx2f(4173, -784),
+		Vectorx2f(3959, -420)
+	};
+
+	Polygon fjelcliff2barrier3;
+	fjelcliff2barrier3.vertices = {
+		Vectorx2f(3959, -420),
+		Vectorx2f(3551, -182)
+	};
+
+	Polygon fjelcliff2barrier4;
+	fjelcliff2barrier4.vertices = {
+		Vectorx2f(3551, -182),
+		Vectorx2f(2846, -95)
+	};
+
+	Polygon fjelcliff2barrier5;
+	fjelcliff2barrier5.vertices = {
+		Vectorx2f(2846, -95),
+		Vectorx2f(1965, -311)
+	};
+
+	Polygon fjelcliff2barrier6;
+	fjelcliff2barrier6.vertices = {
+		Vectorx2f(1965, -311),
+		Vectorx2f(1875, -139)
+	};
+
+	Polygon fjelcliff2barrier7;
+	fjelcliff2barrier7.vertices = {
+		Vectorx2f(1875, -139),
+		Vectorx2f(2091, 96)
+	};
+
+	Polygon fjelcliff2barrier8;
+	fjelcliff2barrier8.vertices = {
+		Vectorx2f(2091, 96),
+		Vectorx2f(3062, 329)
+	};
+
+	Polygon fjelcliff2barrier9;
+	fjelcliff2barrier9.vertices = {
+		Vectorx2f(3062, 329),
+		Vectorx2f(3789, 209)
+	};
+
+	Polygon fjelcliff2barrier10;
+	fjelcliff2barrier10.vertices = {
+		Vectorx2f(3789, 209),
+		Vectorx2f(5000, 189)
+	};
+
+	
+
 #endif // VERTICES_H
