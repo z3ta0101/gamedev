@@ -18,17 +18,18 @@
 #include <fstream>
 #include <sstream>
 #include "./vectorx2f.h"
+#include "./WorldTime.h"
+#include "./feedback.h"
+#include "./portrait.h"
 
 using namespace sf;
 
 // Player Coordinates
-sf::Vector2f playerPosition(1900, -3000);
+sf::Vector2f playerPos(1100, -200);
 
 sf::Sprite player;
 
-int area = 3;
-
-#include "./doors.h"
+int area = 5;
 
 bool hasPlayed = false;
 
@@ -45,11 +46,15 @@ int generateRandomNumber() {
 #include "./npc.h"
 
 int playerHealth = 10;
-int playerArmor = 17;
+const int maxPlayerHealth = 10; // Maximum player health
+int playerArmor = 10;
+bool isPlatemailEquipped = false;
 
 #include "./enemy.h"
 #include "./polygon.h"
 #include "./inv.h"
+#include "./region_map.h"
+#include "./doors.h"
 
 int main()
 {
@@ -65,7 +70,8 @@ int main()
     Minimap minimap1("/home/z3ta/c++/SoV/images/backgrounds/town1xmm.jpg", 0.1f, sf::Vector2f(100.f, 100.f));
     Minimap minimap2("/home/z3ta/c++/SoV/images/backgrounds/town2mm.jpg", 0.1f, sf::Vector2f(100.f, 100.f));
     Minimap minimap3("/home/z3ta/c++/SoV/images/backgrounds/wilderness1mm.jpg", 0.1f, sf::Vector2f(100.f, 100.f));
-    Door fjeltaverndoor(sf::Vector2f(900, -3472), "/home/z3ta/c++/SoV/images/sprites/doorspritesheet1.png");
+    PolyDoor fjeltavernout;
+    Door1 fjeltaverndoor(sf::Vector2f(40, -2390), "/home/z3ta/c++/SoV/images/sprites/doorspritesheet1.png");
     Door2 halfgiantsdoor(sf::Vector2f(249, 1733), "/home/z3ta/c++/SoV/images/sprites/hgdoorspritesheet.png");
     Door3 smithdoor(sf::Vector2f(7835, -3364), "/home/z3ta/c++/SoV/images/sprites/smithdoor.png");
     Door4 herbalistdoor(sf::Vector2f(9664, 967), "/home/z3ta/c++/SoV/images/sprites/herbalistdoorspritesheet.png");
@@ -78,8 +84,6 @@ int main()
     int playerAttackRoll = generateRandomNumber();
 
     #include "./vertices.h"
-
-    srand(time(NULL));
 
     const unsigned WINDOW_WIDTH = 1400;
     const unsigned WINDOW_HEIGHT = 1400;
@@ -105,7 +109,6 @@ int main()
     int left = 4;
     int upleft = 5;
     int upright = 6;
-    int downright = 7;
     int downleft = 8;
     int direction = 1;
     int directionx = 0;
@@ -131,6 +134,10 @@ int main()
     RenderWindow window(VideoMode(1400, 1400), "Shadows of Vaalundroth", Style::Default);
     window.setFramerateLimit(60);
 
+    // Debug default view size
+    sf::View defaultView = window.getDefaultView();
+    std::cout << "Default view size: " << defaultView.getSize().x << "x" << defaultView.getSize().y << std::endl;
+
     sf::Texture& backgroundtxtr = IconManager::getIcon("/home/z3ta/c++/SoV/images/backgrounds/town1x.jpg");
     sf::Sprite background(backgroundtxtr);
     background.setPosition(0, -4200);
@@ -147,7 +154,7 @@ int main()
     inventoryUI.isVisible = false;
 
     for (int i = 0; i < 1; ++i) {
-        Item dagger("dagger " + std::to_string(i + 1), i + 1, 1, "/home/z3ta/c++/SoV/images/ui/daggericon.png", ItemType::Weapon, 1, 100, Effect(), false, UseLimitations(), "Dagger");
+        Item dagger("dagger " + std::to_string(i + 1), i + 1, 1, "/home/z3ta/c++/SoV/images/ui/daggericon.png", ItemType::Weapon, 10, 100, Effect(), false, UseLimitations(), "Dagger");
         inventory.addItem(dagger);
     }
 
@@ -158,29 +165,28 @@ int main()
     }
 
     for (int i = 0; i < 1; ++i) {
-        Item platemail("platemail " + std::to_string(i + 1), i + 3, 1, "/home/z3ta/c++/SoV/images/ui/icons/plateicon00001.png", ItemType::Armor, 10, 100, Effect(), true, UseLimitations(), "Platemail");
+        Item platemail("platemail " + std::to_string(i + 1), i + 3, 1, "/home/z3ta/c++/SoV/images/ui/icons/plateicon00001.png", ItemType::Armor, 10, 100, Effect(), false, UseLimitations(), "Platemail");
         inventory.addItem(platemail);
-        
     }
 
     sf::Texture& cavetxtr = IconManager::getIcon("/home/z3ta/c++/SoV/images/layers/fcaveoverlayer.png");
     sf::Sprite overhang(cavetxtr);
     overhang.setPosition(9228, -560);
 
-    sf::Texture& fjelenvartxtr = IconManager::getIcon("/home/z3ta/c++/SoV/images/backgrounds/town2.jpg");
+    sf::Texture& fjelenvartxtr = IconManager::getIcon("/home/z3ta/c++/SoV/images/backgrounds/fjel1.png");
     sf::Sprite fjelenvar(fjelenvartxtr);
     fjelenvar.setPosition(0, -4200);
 
     sf::Texture& fjeltaverntxtr = IconManager::getIcon("/home/z3ta/c++/SoV/images/backgrounds/fjeltaverninn.png");
     sf::Sprite fjeltaverninn(fjeltaverntxtr);
     fjeltaverninn.setPosition(2700, 1700);
-    fjeltaverninn.setRotation(71);
+    fjeltaverninn.setRotation(61);
 
-    sf::IntRect fjelhearthSourceSprite(0, 0, 414, 155);
-    sf::Texture& fjelfireplacetxtr = IconManager::getIcon("/home/z3ta/c++/SoV/images/sprites/fireplacespritesheet.png");
+    sf::IntRect fjelhearthSourceSprite(0, 0, 220, 220);
+    sf::Texture& fjelfireplacetxtr = IconManager::getIcon("/home/z3ta/c++/SoV/images/buildings/interior/fireplace1.png");
     sf::Sprite fjelfireplace(fjelfireplacetxtr);
-    fjelfireplace.setPosition(2940, 2400);
-    fjelfireplace.setRotation(71);
+    fjelfireplace.setPosition(2840, 2340);
+    fjelfireplace.setRotation(18);
 
     sf::Texture& fjelfireboxtxtr = IconManager::getIcon("/home/z3ta/c++/SoV/images/sprites/fireplacefirebox.png");
     sf::Sprite fjelfirebox(fjelfireboxtxtr);
@@ -211,16 +217,24 @@ int main()
     sf::Vector2f fjeldoor1Position(905, -3473);
 
     sf::IntRect rectSourceSprite(0, 0, 0, 0);
-    sf::Texture& playertxtr = IconManager::getIcon("/home/z3ta/c++/SoV/images/sprites/spritesheetfemale/basefemale.png");
+    sf::Texture& playertxtr = IconManager::getIcon("/home/z3ta/c++/SoV/images/sprites/spritesheetfemale/femalebase.png");
     player.setTexture(playertxtr);
-    player.setPosition(playerPosition);
+    player.setPosition(playerPos);
 
     sf::IntRect clothesSourceSprite(0, 0, 0, 0);
+    sf::IntRect armorSourceSprite(0, 0, 0, 0);
 
     sf::Sprite playerclothes;
-    sf::Texture& playerclothestxtr = IconManager::getIcon("/home/z3ta/c++/SoV/images/layers/clotheslayer1.png");
+    sf::Texture& playerclothestxtr = IconManager::getIcon("/home/z3ta/c++/SoV/images/sprites/spritesheetfemale/femaleclothes.png");
     playerclothes.setTexture(playerclothestxtr);
-    playerclothes.setPosition(playerPosition);
+    playerclothes.setTextureRect(clothesSourceSprite);
+    playerclothes.setPosition(playerPos);
+
+    sf::Sprite playerarmor;
+    sf::Texture& playerarmortxtr = IconManager::getIcon("/home/z3ta/c++/SoV/images/sprites/spritesheetfemale/femalearmor.png");
+    playerarmor.setTexture(playerarmortxtr);
+    playerarmor.setTextureRect(armorSourceSprite);
+    playerarmor.setPosition(playerPos);
 
     sf::IntRect barrelSourceSprite(0, 0, 71, 98);
     sf::IntRect xSprite(0, 0, 24, 19);
@@ -230,16 +244,20 @@ int main()
     sf::Vector2f mapPosition(500, -200);
     sf::Texture& collisionxtxtr = IconManager::getIcon("/home/z3ta/c++/SoV/images/sprites/playerspritesheet.png");
 
-    sf::Clock clock;
+    sf::Clock worldClock; // Clock for WorldTime
+    sf::Clock clock;      // Clock for animations
     sf::Clock clockx;
     sf::Clock fireclock;
 
     xcollision.setTexture(playertxtr);
     xcollision.setPosition(xPosition);
     sf::Vector2f sizeIncrease(1.0f, 1.0f);
+    sf::Vector2f sizeIncrease2(0.7f, 0.7f);
     sf::Vector2f sizeDecrease(0.1f, 0.1f);
     player.setScale(sf::Vector2f(player.getScale().x + sizeIncrease.x, player.getScale().y + sizeIncrease.y));
     playerclothes.setScale(sf::Vector2f(playerclothes.getScale().x + sizeIncrease.x, playerclothes.getScale().y + sizeIncrease.y));
+    playerarmor.setScale(sf::Vector2f(playerarmor.getScale().x + sizeIncrease.x, playerarmor.getScale().y + sizeIncrease.y));
+    fjelfireplace.setScale(sf::Vector2f(fjelfireplace.getScale().x + sizeIncrease2.x, fjelfireplace.getScale().y + sizeIncrease2.y));
     xcollision.setScale(sf::Vector2f(xcollision.getScale().x + sizeIncrease.x, player.getScale().y + sizeIncrease.y));
 
     sf::Texture& barreltxtr = IconManager::getIcon("/home/z3ta/c++/SoV/images/sprites/barreldestructsequence1.png");
@@ -255,19 +273,19 @@ int main()
     sf::Sprite tavern(taverntxtr);
     tavern.setPosition(tavernPosition);
 
-    sf::Texture& taverntoptxtr = IconManager::getIcon("/home/z3ta/c++/SoV/images/buildings/taverntop.png");
+    sf::Texture& taverntoptxtr = IconManager::getIcon("/home/z3ta/c++/SoV/images/backgrounds/taverntop.png");
     sf::Sprite taverntop(taverntoptxtr);
     taverntop.setPosition(tavernTopPosition);
 
-    sf::Texture& whousetoptxtr = IconManager::getIcon("/home/z3ta/c++/SoV/images/buildings/whousetop.png");
+    sf::Texture& whousetoptxtr = IconManager::getIcon("/home/z3ta/c++/SoV/images/backgrounds/whousetop.png");
     sf::Sprite whousetop(whousetoptxtr);
     whousetop.setPosition(whouseTopPosition);
 
-    sf::Texture& wtowertoptxtr = IconManager::getIcon("/home/z3ta/c++/SoV/images/buildings/wtowertop.png");
+    sf::Texture& wtowertoptxtr = IconManager::getIcon("/home/z3ta/c++/SoV/images/backgrounds/wtowertop.png");
     sf::Sprite wtowertop(wtowertoptxtr);
     wtowertop.setPosition(wtowerTopPosition);
 
-    sf::Texture& bhousetoptxtr = IconManager::getIcon("/home/z3ta/c++/SoV/images/buildings/bhousetop.png");
+    sf::Texture& bhousetoptxtr = IconManager::getIcon("/home/z3ta/c++/SoV/images/backgrounds/bhousetop.png");
     sf::Sprite bhousetop(bhousetoptxtr);
     bhousetop.setPosition(bhouseTopPosition);
 
@@ -280,15 +298,62 @@ int main()
     sf::Sprite taverndoor(door1txtr, door1SourceSprite);
     taverndoor.setPosition(fjeldoor1Position);
 
-    NPC npc(660.f, 2480.f, font, window);
+    NPC npc(2120.f, 2405.f, font, window);
+    RegionMapTrigger mapTrigger(4700.f, 500.f, window); // Fjelenvar to Wilderness
+    RegionMapTrigger mapTrigger2(10702.f, -2370.f, window); // Wilderness to Fjelenvar
     bool isPlayerFrozen = false;
+
+    // Create Feedback
+    Feedback feedback(font);
+
+    // Create WorldTime with Feedback
+    WorldTime worldTime(feedback);
+
+    // Create Rest button
+    sf::RectangleShape restButton(sf::Vector2f(100, 50));
+    restButton.setPosition(50, 1300); // Bottom left with padding
+    restButton.setFillColor(sf::Color(100, 100, 100)); // Gray background
+    restButton.setOutlineColor(sf::Color::White);
+    restButton.setOutlineThickness(2);
+
+    // Load button texture
+    sf::Texture buttonTexture;
+    if (!buttonTexture.loadFromFile("/home/z3ta/c++/SoV/images/sprites/buttons/button1.png")) {
+        std::cerr << "Error loading button texture!" << std::endl;
+        // Fallback to gray background
+    } else {
+        restButton.setTexture(&buttonTexture);
+    }
+
+    // Create Rest button text
+    sf::Text restButtonText;
+    restButtonText.setFont(font);
+    restButtonText.setString("Hvil");
+    restButtonText.setCharacterSize(20);
+    restButtonText.setFillColor(sf::Color::White);
+    // Center text in button
+    sf::FloatRect textBounds = restButtonText.getLocalBounds();
+    restButtonText.setOrigin(textBounds.left + textBounds.width / 2, textBounds.top + textBounds.height / 2);
+    restButtonText.setPosition(restButton.getPosition().x + restButton.getSize().x / 2, 
+                              restButton.getPosition().y + restButton.getSize().y / 2);
+
+    // Create Portrait
+    Portrait portrait("/home/z3ta/c++/SoV/images/portraits/portrait3.png", sf::Vector2f(20, 20), playerHealth, maxPlayerHealth);
+    sf::FloatRect portraitBounds = portrait.getPortrait().getGlobalBounds();
+    std::cout << "Portrait initialized at position (20, 20) with health: " << playerHealth << "/" << maxPlayerHealth 
+              << ", bounds: " << portraitBounds.width << "x" << portraitBounds.height << std::endl;
+
+    float deltaTimex = 0.0f;
+    static bool wasLeftMousePressed = false;
+    static int previousArea = area;
 
     while (window.isOpen())
     {
+        deltaTimex = worldClock.restart().asSeconds();
+
         Event event;
         Polygon playerOriginal = collisionx;
         Polygon attackxOriginal = attackx;
-        sf::Vector2f playerPos = player.getPosition();
         sf::Vector2i mousePos = sf::Mouse::getPosition(window);
 
         while (window.pollEvent(event))
@@ -297,23 +362,88 @@ int main()
                 window.close();
 
             npc.handleInput(event, mousePos, window);
+            mapTrigger.handleInput(event, mousePos);
+            mapTrigger2.handleInput(event, mousePos);
 
             if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::I) {
                 inventoryUI.isVisible = !inventoryUI.isVisible;
             }
+
+            if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+                sf::Vector2f mousePosView = window.mapPixelToCoords(mousePos, window.getDefaultView());
+                if (restButton.getGlobalBounds().contains(mousePosView)) {
+                    worldTime.triggerRest(playerHealth, maxPlayerHealth);
+                }
+            }
         }
+
+        // Check for area changes
+        if (area != previousArea) {
+            std::cout << "Area changed to: " << area << ", PlayerPos: (" << playerPos.x << ", " << playerPos.y << ")\n";
+            player.setPosition(playerPos);
+            playerclothes.setPosition(playerPos);
+            playerarmor.setPosition(playerPos);
+            previousArea = area;
+        }
+
+        // Combat trigger (left-click near enemy in area 3)
+        bool isLeftMousePressed = sf::Mouse::isButtonPressed(sf::Mouse::Left);
+        if (isLeftMousePressed && !wasLeftMousePressed && area == 3 && !isPlayerFrozen) {
+            sf::Vector2f mouseWorldPos = window.mapPixelToCoords(mousePos, window.getView());
+            float distanceToEnemy = std::sqrt(std::pow(enemy.getSprite().getPosition().x - mouseWorldPos.x, 2) +
+                                              std::pow(enemy.getSprite().getPosition().y - mouseWorldPos.y, 2));
+            float distanceToEnemy1 = std::sqrt(std::pow(enemy1.getSprite().getPosition().x - mouseWorldPos.x, 2) +
+                                               std::pow(enemy1.getSprite().getPosition().y - mouseWorldPos.y, 2));
+            Enemy* targetEnemy = nullptr;
+            if (distanceToEnemy <= 100.0f) {
+                targetEnemy = &enemy;
+            } else if (distanceToEnemy1 <= 100.0f) {
+                targetEnemy = &enemy1;
+            }
+            if (targetEnemy) {
+                int playerRoll = generateRandomNumber();
+                int enemyRoll = generateRandomNumber();
+                feedback.addMessage("Spiller angrep: " + std::to_string(playerRoll));
+                feedback.addMessage("Fiende angrep: " + std::to_string(enemyRoll));
+                if (enemyRoll > playerRoll) {
+                    int damage = 1; // Placeholder damage
+                    if (isPlatemailEquipped) {
+                        damage = std::max(0, damage - (playerArmor / 10)); // Reduce damage based on armor
+                    }
+                    playerHealth = std::max(0, playerHealth - damage);
+                    feedback.addMessage("Spiller tok " + std::to_string(damage) + " skade, Ny HP: " + std::to_string(playerHealth));
+                    portrait.setHealth(playerHealth); // Update portrait
+                }
+            }
+        }
+        wasLeftMousePressed = isLeftMousePressed;
 
         if (hasPlayed == false) {
             playIntroMovie(window);
+            hasPlayed = true;
         }
 
         #include </home/z3ta/c++/SoV/main/animations.h>
+
+        // Update WorldTime
+        worldTime.setPaused(isPlayerFrozen);
+        worldTime.update(deltaTimex, playerHealth);
+
+        // Update Feedback
+        feedback.update(deltaTimex);
+
+        // Update Portrait
+        portrait.update();
+
+        // Update Region Map
+        mapTrigger.update(playerPos, mousePos);
+        mapTrigger2.update(playerPos, mousePos);
 
         playerCenter = Vector2f(player.getPosition());
         playerRight = Vector2f(player.getPosition());
         playerLeft = Vector2f(player.getPosition());
 
-        mousePosWindow = Vector2f(Mouse::getPosition(window));
+        mousePosWindow = Vector2f(mousePos);
 
         aimDir = mousePosWindow - playerCenter;
         float aimDirMagnitude = sqrt(pow(aimDir.x, 2) + pow(aimDir.y, 2));
@@ -332,21 +462,28 @@ int main()
         if (Keyboard::isKeyPressed(Keyboard::A) && !isPlayerFrozen) {
             player.move(-playerSpeed, 0.f);
             playerclothes.move(-playerSpeed, 0.f);
+            playerarmor.move(-playerSpeed, 0.f);
         }
         if (Keyboard::isKeyPressed(Keyboard::D) && !isPlayerFrozen) {
             player.move(playerSpeed, 0.f);
             playerclothes.move(playerSpeed, 0.f);
+            playerarmor.move(playerSpeed, 0.f);
         }
         if (Keyboard::isKeyPressed(Keyboard::W) && !isPlayerFrozen) {
             player.move(0.f, -playerSpeed);
             playerclothes.move(0.f, -playerSpeed);
+            playerarmor.move(0.f, -playerSpeed);
         }
         if (Keyboard::isKeyPressed(Keyboard::S) && !isPlayerFrozen) {
             player.move(0.f, playerSpeed);
             playerclothes.move(0.f, playerSpeed);
+            playerarmor.move(0.f, playerSpeed);
         } else {
             idle = 1;
         }
+
+        // Sync playerPos with sprite position
+        playerPos = player.getPosition();
 
         float collisionOffsetY = 100.0f;
         Vectorx2f adjustedPosition = Vectorx2f::fromSF(player.getPosition());
@@ -407,21 +544,17 @@ int main()
 
         window.clear();
 
-        mousePos = sf::Mouse::getPosition(window);
-
         if (area == 1) {
             window.draw(background);
             window.draw(boundry1Shape);
             window.draw(barrel);
             window.draw(player);
-            
             window.draw(fhouse1x);
             window.draw(overhang);
             window.draw(boundry4Shape);
             minimap1.draw(window);
         }
-
-        if (area == 2) {
+        else if (area == 2) {
             window.draw(fjelenvar);
             fjeltaverndoor.render(window);
             fjeltaverndoor.update(mousePos, window, playerPos);
@@ -432,37 +565,64 @@ int main()
             herbalistdoor.render(window);
             herbalistdoor.update(mousePos, window, playerPos);
             window.draw(player);
-            
             window.draw(fjeltree);
             minimap2.draw(window);
         }
-
-        if (area == 3) {
+        else if (area == 3) {
             window.draw(wilderness1);
             window.draw(enemy.getSprite());
             window.draw(enemy1.getSprite());
             window.draw(player);
-            
+            window.draw(playerclothes);
+            window.draw(playerarmor);
             minimap3.draw(window);
+            feedback.draw(window); // Draw feedback
+            mapTrigger2.draw(window);
             enemy.update(player.getPosition().x, player.getPosition().y, deltaTime);
             enemy1.update(player.getPosition().x, player.getPosition().y, deltaTime);
         }
-
-        if (area == 4) {
+        else if (area == 4) {
             window.draw(fjeltaverninn);
             window.draw(fjelfireplace);
-            window.draw(fjelfirebox);
             window.draw(player);
-            
-            npc.update(playerPosition, mousePos);
-            npc.handleInput(event, mousePos, window);
+            fjeltavernout.render(window);
+            fjeltavernout.update(mousePos, window, playerPos);
+            npc.update(playerPos, mousePos);
             npc.draw(window);
+        }
+        else if (area == 5) {
+            window.draw(fjelenvar);
+            fjeltaverndoor.render(window);
+            fjeltaverndoor.update(mousePos, window, playerPos);
+            window.draw(player);
+            feedback.draw(window); // Draw feedback
+            mapTrigger.draw(window);
+        }
+        else if (area == 6 || area == 7 || area == 8) {
+            std::cerr << "Warning: Area " << area << " not fully implemented, using fallback rendering.\n";
+            sf::RectangleShape fallback(sf::Vector2f(1700, 1700));
+            fallback.setPosition(playerPos.x - 850, playerPos.y - 850);
+            fallback.setFillColor(sf::Color::White);
+            window.draw(fallback);
+            window.draw(player);
+            window.draw(playerclothes);
+            window.draw(playerarmor);
         }
 
         minimap1.update(sf::Vector2f(playerCenter - mapPosition), sf::Vector2f(window.getSize()));
         minimap2.update(sf::Vector2f(playerCenter - mapPosition), sf::Vector2f(window.getSize()));
         minimap3.update(sf::Vector2f(playerCenter - mapPosition), sf::Vector2f(window.getSize()));
         inventoryUI.draw(window);
+
+        // Draw UI elements in default view
+        sf::View currentView = window.getView();
+        window.setView(window.getDefaultView());
+        portrait.draw(window); // Draw portrait
+        window.draw(restButton);
+        window.draw(restButtonText);
+        window.setView(currentView);
+
+        worldTime.draw(window);
         window.display();
     }
 
